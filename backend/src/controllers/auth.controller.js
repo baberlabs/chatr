@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 
 import { AppError } from "../utils/AppError.js";
 import User from "../models/user.model.js";
+import { generateJWT } from "../utils/generateJWT.js";
 
 export const registerUser = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -13,7 +14,7 @@ export const registerUser = async (req, res) => {
   if (!password) throw new AppError("Password is required", 400);
 
   const trimmedFullName = fullName.trim();
-  const trimmedEmail = email.trim();
+  const trimmedEmail = email.trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(trimmedEmail)) throw new AppError("Invalid email", 400);
@@ -41,6 +42,7 @@ export const registerUser = async (req, res) => {
   });
 
   await newUser.save();
+  generateJWT(newUser._id, res);
 
   return res.status(201).json({
     message: "User registered successfully",
