@@ -148,5 +148,25 @@ describe("Auth Routes", () => {
       expect(res.status).toBe(409); // conflict error
       expect(res.body.message).toBe("Email already exists");
     });
+
+    it("should register a user with valid data and set JWT cookie", async () => {
+      const res = await request(app).post(endpoint).send(validPayload);
+
+      expect(res.status).toBe(201);
+
+      expect(res.body).toMatchObject({
+        message: "User registered successfully",
+        user: {
+          fullName: validPayload.fullName,
+          email: validPayload.email,
+          isVerified: false,
+        },
+      });
+
+      // JWT Cookie
+      const cookie = res.headers["set-cookie"];
+      expect(cookie).toBeDefined();
+      expect(cookie[0]).toMatch(/jwt=/);
+    });
   });
 });
