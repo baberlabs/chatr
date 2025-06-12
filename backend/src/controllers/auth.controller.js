@@ -90,7 +90,16 @@ export const loginUser = async (req, res) => {
   });
 };
 
-export const logoutUser = () => {};
+export const logoutUser = (req, res) => {
+  res.cookie("jwt", "", {
+    maxAge: 0,
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  return res.status(200).json({ message: "User logged out successfully" });
+};
 
 export const getCurrentUser = () => {};
 

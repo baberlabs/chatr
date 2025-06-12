@@ -13,7 +13,7 @@ const router = Router();
 
 router.post("/register", catchAsync(registerUser));
 router.post("/login", catchAsync(loginUser));
-router.post("/logout", authenticateUser, catchAsync(logoutUser));
+router.post("/logout", catchAsync(logoutUser));
 router.get("/me", authenticateUser, catchAsync(getCurrentUser));
 router.get("/status", authenticateUser, catchAsync(checkAuthStatus));
 
