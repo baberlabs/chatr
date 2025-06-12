@@ -101,8 +101,6 @@ export const logoutUser = (req, res) => {
   return res.status(200).json({ message: "User logged out successfully" });
 };
 
-export const getCurrentUser = () => {};
-
 export const checkAuthStatus = async (req, res) => {
   return res.status(200).json({
     message: "Authorised - Valid Token",
