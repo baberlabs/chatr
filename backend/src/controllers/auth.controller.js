@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 
 import { AppError } from "../utils/AppError.js";
-import User from "../models/user.model.js";
 import { generateJWT } from "../utils/generateJWT.js";
+
+import User from "../models/user.model.js";
 
 export const registerUser = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -62,4 +63,9 @@ export const logoutUser = () => {};
 
 export const getCurrentUser = () => {};
 
-export const checkAuthStatus = () => {};
+export const checkAuthStatus = async (req, res) => {
+  return res.status(200).json({
+    message: "Authorised - Valid Token",
+    user: req.user,
+  });
+};
