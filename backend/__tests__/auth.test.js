@@ -1,7 +1,7 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { jest } from "@jest/globals";
+import { describe, jest } from "@jest/globals";
 
 import app from "../src/app.js";
 
@@ -167,6 +167,49 @@ describe("Auth Routes", () => {
       const cookie = res.headers["set-cookie"];
       expect(cookie).toBeDefined();
       expect(cookie[0]).toMatch(/jwt=/);
+    });
+  });
+
+  describe("GET /api/v1/auth/status", () => {
+    const endpoint = "/api/v1/auth/status";
+
+    it("should return 401 if no cookie is sent", async () => {
+      const res = await request(app).get(endpoint);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return 401 if JWT is invalid", async () => {
+      const res = await request(app)
+        .get(endpoint)
+        .set("Cookie", ["jwt=invalid.token.here"]);
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - Invalid Token");
+    });
+
+    it("should return 200 and user data if JWT is valid", async () => {
+      const registerRes = await request(app)
+        .post("/api/v1/auth/register")
+        .send({
+          fullName: "Status Test User",
+          email: "status@test.com",
+          password: "validPassword123",
+        });
+
+      const cookies = registerRes.header["set-cookie"];
+      expect(cookies).toBeDefined();
+
+      const res = await request(app).get(endpoint).set("Cookie", cookies);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("Authorised - Valid Token");
+      expect(res.body.user).toMatchObject({
+        _id: expect.any(String),
+        fullName: "Status Test User",
+        email: "status@test.com",
+        isVerified: false,
+      });
     });
   });
 });
