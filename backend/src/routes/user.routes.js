@@ -7,13 +7,14 @@ import {
   getOnlineUsers,
 } from "../controllers/user.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 const router = Router();
 
-router.get("/", authenticateUser, getAllUsers);
-router.get("/online", authenticateUser, getOnlineUsers);
-router.get("/:id", authenticateUser, getUserById);
-router.put("/:id", authenticateUser, updateUserProfile);
-router.delete("/:id", authenticateUser, deleteUser);
+router.get("/", authenticateUser, catchAsync(getAllUsers));
+router.get("/online", authenticateUser, catchAsync(getOnlineUsers));
+router.get("/:id", authenticateUser, catchAsync(getUserById));
+router.put("/:id", authenticateUser, catchAsync(updateUserProfile));
+router.delete("/:id", authenticateUser, catchAsync(deleteUser));
 
 export default router;

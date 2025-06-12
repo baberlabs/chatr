@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 
 import registerRoutes from "./routes/index.js";
+import { globalErrorHandler } from "./utils/globalErrorHandler.js";
 
 const app = express();
 
@@ -17,11 +18,6 @@ app.use(cookieParser());
 
 registerRoutes(app);
 
-app.use((error, req, res, next) => {
-  console.error(`Error: ${error}`);
-  res
-    .status(error.status || 500)
-    .json({ message: error.message | "Internal Server Error" });
-});
+app.use(globalErrorHandler);
 
 export default app;

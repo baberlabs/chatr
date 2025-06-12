@@ -8,14 +8,15 @@ import {
   leaveGroupChat,
 } from "../controllers/chat.controller.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 const router = Router();
 
-router.post("/", authenticateUser, createChat);
-router.get("/:chatId", authenticateUser, getChatById);
-router.delete("/:chatId", authenticateUser, deleteChat);
-router.post("/group", authenticateUser, createGroupChat);
-router.put("/group/:id", authenticateUser, updateGroupChat);
-router.put("/group/leave/:id", authenticateUser, leaveGroupChat);
+router.post("/", authenticateUser, catchAsync(createChat));
+router.get("/:chatId", authenticateUser, catchAsync(getChatById));
+router.delete("/:chatId", authenticateUser, catchAsync(deleteChat));
+router.post("/group", authenticateUser, catchAsync(createGroupChat));
+router.put("/group/:id", authenticateUser, catchAsync(updateGroupChat));
+router.put("/group/leave/:id", authenticateUser, catchAsync(leaveGroupChat));
 
 export default router;
