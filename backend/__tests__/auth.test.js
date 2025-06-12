@@ -1,12 +1,14 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import { jest } from "@jest/globals";
 
 import app from "../src/app.js";
 
 let mongo;
 
 beforeAll(async () => {
+  jest.spyOn(console, "error").mockImplementation(() => {});
   mongo = await MongoMemoryServer.create();
   await mongoose.connect(mongo.getUri());
 });
@@ -32,28 +34,6 @@ describe("Auth Routes", () => {
       email: "test@example.com",
       password: "strongPassword123",
     };
-
-    it("should register a user with valid data", async () => {
-      const res = await request(app).post(endpoint).send(validPayload);
-
-      expect(res.status).toBe(201);
-
-      expect(res.body).toMatchObject({
-        message: "User registered successfully",
-        user: {
-          fullName: validPayload.fullName,
-          email: validPayload.email,
-          isVerified: false,
-        },
-      });
-
-      expect(res.body.user._id).toBeDefined();
-      expect(mongoose.isValidObjectId(res.body.user._id)).toBe(true);
-
-      expect(res.body.user).not.toHaveProperty("password");
-      expect(res.body.user).not.toHaveProperty("verificationCode");
-      expect(res.body.user).not.toHaveProperty("verificationCodeExpires");
-    });
 
     it("should fail if fullName is missing", async () => {
       const { fullName, ...payload } = validPayload;
@@ -102,7 +82,7 @@ describe("Auth Routes", () => {
     it("should fail if fullName is too short", async () => {
       const res = await request(app)
         .post(endpoint)
-        .send({ ...validPayload, fullName: "Abc" });
+        .send({ ...validPayload, fullName: "Ab" });
 
       expect(res.status).toBe(400);
       expect(res.body.message).toBe(
@@ -122,6 +102,40 @@ describe("Auth Routes", () => {
       );
     });
 
+    it("should register a user with valid data", async () => {
+      const res = await request(app).post(endpoint).send(validPayload);
+
+      expect(res.status).toBe(201);
+
+      expect(res.body).toMatchObject({
+        message: "User registered successfully",
+        user: {
+          fullName: validPayload.fullName,
+          email: validPayload.email,
+          isVerified: false,
+        },
+      });
+
+      expect(res.body.user._id).toBeDefined();
+      expect(mongoose.isValidObjectId(res.body.user._id)).toBe(true);
+
+      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("verificationCode");
+      expect(res.body.user).not.toHaveProperty("verificationCodeExpires");
+    });
+
+    it("should trim leading/trailing whitespace from input", async () => {
+      const res = await request(app).post(endpoint).send({
+        fullName: "    Test User    ",
+        email: "      test@example.com     ",
+        password: "    strongPassword123      ",
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.user.fullName).toBe("Test User");
+      expect(res.body.user.email).toBe("test@example.com");
+    });
+
     it("should fail if email already exists", async () => {
       // First time email is used
       await request(app).post(endpoint).send(validPayload);
@@ -133,18 +147,6 @@ describe("Auth Routes", () => {
 
       expect(res.status).toBe(409); // conflict error
       expect(res.body.message).toBe("Email already exists");
-    });
-
-    it("should trim leading/trailing whitespace from input", async () => {
-      const res = await request(app).post(endpoint).send({
-        fullName: "    Test User    ",
-        email: "      test@example.com     ",
-        password: "    strongPassword123      ",
-      });
-
-      expect(res.status).toBe(200);
-      expect(res.body.user.fullName).toBe("Test User");
-      expect(res.body.user.email).toBe("test@example.com");
     });
   });
 });
