@@ -1,7 +1,7 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { describe, jest } from "@jest/globals";
+import { beforeEach, describe, jest } from "@jest/globals";
 
 import app from "../src/app.js";
 
@@ -159,6 +159,7 @@ describe("Auth Routes", () => {
         user: {
           fullName: validPayload.fullName,
           email: validPayload.email,
+          profilePic: "",
           isVerified: false,
         },
       });
@@ -210,6 +211,89 @@ describe("Auth Routes", () => {
         email: "status@test.com",
         isVerified: false,
       });
+    });
+  });
+
+  describe("POST /api/v1/auth/login", () => {
+    const endpoint = "/api/v1/auth/login";
+
+    const validUser = {
+      fullName: "Login Test User",
+      email: "login@test.com",
+      password: "validPassword123",
+    };
+
+    beforeEach(async () => {
+      await request(app).post("/api/v1/auth/register").send(validUser);
+    });
+
+    it("should fail if email is missing", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ password: validUser.password });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Email is required");
+    });
+
+    it("should fail if password is missing", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ email: validUser.email });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Password is required");
+    });
+
+    it("should fail if email is invalid", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ email: "not-an-email", password: validUser.password });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid email");
+    });
+
+    it("should fail if user does not exist", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ email: "not@registered.com", password: validUser.password });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Invalid credentials");
+    });
+
+    it("should fail if password is incorrect", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ email: validUser.email, password: "incorrectPassword123" });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Invalid credentials");
+    });
+
+    it("should login successfully with correct credentials and set JWT cookie", async () => {
+      const res = await request(app)
+        .post(endpoint)
+        .send({ email: validUser.email, password: validUser.password });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: "User logged in successfully",
+        user: {
+          fullName: validUser.fullName,
+          email: validUser.email,
+          profilePic: "",
+          isVerified: false,
+        },
+      });
+
+      expect(res.body.user._id).toBeDefined();
+      expect(res.body.user).not.toHaveProperty("password");
+
+      const cookies = res.headers["set-cookie"];
+      expect(cookies).toBeDefined();
+      expect(cookies[0]).toMatch(/jwt=/);
     });
   });
 });
