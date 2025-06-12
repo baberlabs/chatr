@@ -296,4 +296,47 @@ describe("Auth Routes", () => {
       expect(cookies[0]).toMatch(/jwt=/);
     });
   });
+
+  describe("POST /api/v1/auth/logout", () => {
+    const endpoint = "/api/v1/auth/logout";
+
+    const validUser = {
+      fullName: "Logout Tester",
+      email: "logout@tester.com",
+      password: "strongPassword123",
+    };
+
+    let cookies;
+
+    beforeEach(async () => {
+      const res = await request(app)
+        .post("/api/v1/auth/register")
+        .send(validUser);
+
+      cookies = res.headers["set-cookie"];
+      expect(cookies).toBeDefined();
+    });
+
+    it("should clear the JWT cookie on logout", async () => {
+      const res = await request(app).post(endpoint).set("Cookie", cookies);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("User logged out successfully");
+
+      const clearedCookie = res.headers["set-cookie"][0];
+      expect(clearedCookie).toMatch(/jwt=;/);
+      expect(clearedCookie).toMatch(/Max-Age=0/);
+    });
+
+    it("should return 200 even if no cookie is sent", async () => {
+      const res = await request(app).post(endpoint);
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("User logged out successfully");
+
+      const clearedCookie = res.headers["set-cookie"][0];
+      expect(clearedCookie).toMatch(/jwt=;/);
+      expect(clearedCookie).toMatch(/Max-Age=0/);
+    });
+  });
 });
