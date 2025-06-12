@@ -57,7 +57,38 @@ export const registerUser = async (req, res) => {
   });
 };
 
-export const loginUser = () => {};
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email) throw new AppError("Email is required", 400);
+  if (!password) throw new AppError("Password is required", 400);
+
+  const trimmedEmail = email.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(trimmedEmail)) throw new AppError("Invalid email", 400);
+
+  const user = await User.findOne({ email });
+
+  if (!user) throw new AppError("Invalid credentials", 401);
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) throw new AppError("Invalid credentials", 401);
+
+  generateJWT(user._id, res);
+
+  return res.status(200).json({
+    message: "User logged in successfully",
+    user: {
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+      isVerified: user.isVerified,
+    },
+  });
+};
 
 export const logoutUser = () => {};
 
