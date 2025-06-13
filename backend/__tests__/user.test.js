@@ -449,4 +449,112 @@ describe("User Routes", () => {
       expect(res.body.user).not.toHaveProperty("password");
     });
   });
+
+  describe("DELETE /api/v1/users/:id", () => {
+    const endpointBase = "/api/v1/users";
+
+    const users = [
+      {
+        fullName: "User One",
+        email: "user1@example.com",
+        password: "TestPassword123",
+      },
+      {
+        fullName: "User Two",
+        email: "user2@example.com",
+        password: "TestPassword123",
+      },
+    ];
+
+    let userOneId;
+    let userTwoId;
+    let cookies;
+
+    beforeEach(async () => {
+      const registerEndpoint = "/api/v1/auth/register";
+
+      const res1 = await request(app).post(registerEndpoint).send(users[0]);
+      const res2 = await request(app).post(registerEndpoint).send(users[1]);
+
+      expect(res1.status).toBe(201);
+      expect(res2.status).toBe(201);
+
+      expect(res1.body.user).toBeDefined();
+      expect(res2.body.user).toBeDefined();
+
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
+
+      const loginEndpoint = "/api/v1/auth/login";
+
+      const loginUser = {
+        email: users[0].email,
+        password: users[0].password,
+      };
+
+      const loginRes = await request(app).post(loginEndpoint).send(loginUser);
+
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.user).toBeDefined();
+
+      cookies = loginRes.headers["set-cookie"];
+      expect(cookies).toBeDefined();
+    });
+
+    it("should return 401 if not authenticated", async () => {
+      const res = await request(app).delete(`${endpointBase}/${userOneId}`);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return 403 for deleting someone else's account", async () => {
+      const res = await request(app)
+        .delete(`${endpointBase}/${userTwoId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe("Permission Denied");
+    });
+
+    it("should return 400 for invalid user ID format", async () => {
+      const res = await request(app)
+        .delete(`${endpointBase}/invalid-user-id`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid User ID");
+    });
+
+    it("should return 404 if user not found", async () => {
+      const nonExistentId = "507f1f77bcf86cd799439011";
+      const res = await request(app)
+        .delete(`${endpointBase}/${nonExistentId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe("User Not Found");
+    });
+
+    it("should delete the user successfully", async () => {
+      const res = await request(app)
+        .delete(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: "User account deleted successfully",
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: users[0].email,
+          profilePic: "",
+          isVerified: false,
+        },
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+
+      // should not allow login after account deletion
+      const fetchRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[0].email, password: users[0].password });
+      expect(fetchRes.status).toBe(401);
+      expect(fetchRes.body.message).toBe("Invalid credentials");
+    });
+  });
 });
