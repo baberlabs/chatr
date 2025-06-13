@@ -89,4 +89,85 @@ describe("User Routes", () => {
       }
     });
   });
+
+  describe("GET /api/v1/users/:id", () => {
+    const endpointBase = "/api/v1/users";
+
+    const users = [
+      {
+        fullName: "User One",
+        email: "user1@example.com",
+        password: "Password123",
+      },
+      {
+        fullName: "User Two",
+        email: "user2@example.com",
+        password: "Password123",
+      },
+    ];
+
+    let cookies;
+    let userOneId;
+    let userTwoId;
+
+    beforeEach(async () => {
+      const res1 = await request(app)
+        .post("/api/v1/auth/register")
+        .send(users[0]);
+      const res2 = await request(app)
+        .post("/api/v1/auth/register")
+        .send(users[1]);
+
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
+
+      const loginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[0].email, password: users[0].password });
+
+      cookies = loginRes.header["set-cookie"];
+      expect(cookies).toBeDefined();
+    });
+
+    it("should return 401 if not authenticated", async () => {
+      const res = await request(app).get(`${endpointBase}/${userTwoId}`);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return 400 for invalid user ID format", async () => {
+      const res = await request(app)
+        .get(`${endpointBase}/invalid-id-format`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid User ID");
+    });
+
+    it("should return 404 if user does not exist", async () => {
+      const nonExistentId = "507f1f77bcf86cd799439011";
+      const res = await request(app)
+        .get(`${endpointBase}/${nonExistentId}`)
+        .set("Cookie", cookies);
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe("User Not Found");
+    });
+
+    it("should return user data if authenticated and valid ID", async () => {
+      const res = await request(app)
+        .get(`${endpointBase}/${userTwoId}`)
+        .set("Cookie", cookies);
+
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userTwoId,
+        fullName: users[1].fullName,
+        email: users[1].email,
+        profilePic: "",
+        isVerified: false,
+      });
+
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+  });
 });
