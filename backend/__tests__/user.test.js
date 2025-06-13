@@ -153,7 +153,7 @@ describe("User Routes", () => {
       expect(res.body.message).toBe("User Not Found");
     });
 
-    it("should return user data if authenticated and valid ID", async () => {
+    it("should return with user data if authenticated and valid ID", async () => {
       const res = await request(app)
         .get(`${endpointBase}/${userTwoId}`)
         .set("Cookie", cookies);
@@ -167,6 +167,285 @@ describe("User Routes", () => {
         isVerified: false,
       });
 
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+  });
+
+  describe("PUT /api/v1/users/:id", () => {
+    const endpointBase = "/api/v1/users";
+
+    const users = [
+      {
+        fullName: "User One",
+        email: "user1@example.com",
+        password: "Password123",
+      },
+      {
+        fullName: "User Two",
+        email: "user2@example.com",
+        password: "Password123",
+      },
+    ];
+
+    let cookies;
+    let userOneId;
+    let userTwoId;
+
+    beforeEach(async () => {
+      const res1 = await request(app)
+        .post("/api/v1/auth/register")
+        .send(users[0]);
+      const res2 = await request(app)
+        .post("/api/v1/auth/register")
+        .send(users[1]);
+
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
+
+      const loginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[0].email, password: users[0].password });
+
+      cookies = loginRes.headers["set-cookie"];
+      expect(cookies).toBeDefined();
+    });
+
+    it("should return 401 if not authenticated", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .send({ fullName: "Mr Malicious" });
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return 400 for invalid user ID format", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/invalid-user-id`)
+        .set("Cookie", cookies)
+        .send({ fullName: "Mr Invalid" });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid User ID");
+    });
+
+    it("should return 404 if user not found", async () => {
+      const nonExistentId = "507f1f77bcf86cd799439011";
+      const res = await request(app)
+        .put(`${endpointBase}/${nonExistentId}`)
+        .set("Cookie", cookies)
+        .send({ fullName: "Mr NonExistent" });
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe("User Not Found");
+    });
+
+    it("should return 403 for updating someone else's profile", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userTwoId}`)
+        .set("Cookie", cookies)
+        .send({ fullName: "Mr Someone Else" });
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe("Permission Denied");
+    });
+
+    it("should return 400 if no fields are provided", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({});
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("At least one field must be provided");
+    });
+
+    it("should return 400 if fullName is too short", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ fullName: "Al" });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe(
+        "Full name should be at least 3 characters long"
+      );
+    });
+
+    it("should return 400 if fullName is too long", async () => {
+      const longName = "Al".repeat(30);
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ fullName: longName });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe(
+        "Full name should be less than 50 characters long"
+      );
+    });
+
+    it("should return 400 if password is too short", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ password: "123" });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe(
+        "Password should be at least 8 characters long"
+      );
+    });
+
+    it("should return 400 if email is malformed", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ email: "not-an-email" });
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid email");
+    });
+
+    it("should return 409 if email is already taken", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ email: users[1].email });
+      expect(res.status).toBe(409);
+      expect(res.body.message).toBe("Email already exists");
+    });
+
+    it("should update fullName successfully", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ fullName: "Mr NewName" });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: "Mr NewName",
+        email: users[0].email,
+        profilePic: "",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+
+    it("should update password successfully", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ password: "NewPassword123" });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: users[0].email,
+        profilePic: "",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+
+      const resLogout = await request(app).post("/api/v1/auth/logout");
+      expect(resLogout.status).toBe(200);
+      expect(resLogout.body.message).toBe("User logged out successfully");
+
+      const resLoginOldPassword = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[0].email, password: users[0].password });
+
+      expect(resLoginOldPassword.status).toBe(401);
+      expect(resLoginOldPassword.body.message).toBe("Invalid credentials");
+
+      const resLoginNewPassword = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[0].email, password: "NewPassword123" });
+
+      expect(resLoginNewPassword.status).toBe(200);
+      expect(resLoginNewPassword.body).toMatchObject({
+        message: "User logged in successfully",
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: users[0].email,
+          profilePic: "",
+          isVerified: false,
+        },
+      });
+    });
+
+    it("should update email successfully", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ email: "new@email.com" });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: "new@email.com",
+        profilePic: "",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+
+    it("should normalize email to lowercase", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ email: "New@Email.COM" });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: "new@email.com",
+        profilePic: "",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+
+    it("should update profilePic successfully", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ profilePic: "https://generic.com/url" });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: users[0].email,
+        profilePic: "https://generic.com/url",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+
+    it("should trim whitespace from inputs", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({ email: "     new@email.com   " });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: "new@email.com",
+        profilePic: "",
+        isVerified: false,
+      });
+      expect(res.body.user).not.toHaveProperty("password");
+    });
+
+    it("should update multiple fields successfully", async () => {
+      const res = await request(app)
+        .put(`${endpointBase}/${userOneId}`)
+        .set("Cookie", cookies)
+        .send({
+          fullName: "Mr New",
+          email: "new@email.com",
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: "Mr New",
+        email: "new@email.com",
+        profilePic: "",
+        isVerified: false,
+      });
       expect(res.body.user).not.toHaveProperty("password");
     });
   });
