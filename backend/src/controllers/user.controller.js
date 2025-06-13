@@ -1,4 +1,4 @@
-import User from "../models/user.model";
+import User from "../models/user.model.js";
 
 export const getAllUsers = async (req, res) => {
   const currentUserId = req.user._id;
@@ -15,5 +15,3 @@ export const getUserById = () => {};
 export const updateUserProfile = () => {};
 
 export const deleteUser = () => {};
-
-export const getOnlineUsers = () => {};
