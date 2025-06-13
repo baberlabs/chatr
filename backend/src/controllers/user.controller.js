@@ -103,4 +103,28 @@ export const updateUserProfile = async (req, res) => {
     .json({ message: "User profile updated successfully", user: updatedUser });
 };
 
-export const deleteUser = () => {};
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  const currentUserId = req.user._id;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    throw new AppError("Invalid User ID", 400);
+
+  const user = await User.findById(id).select("-password");
+  if (!user) throw new AppError("User Not Found", 404);
+
+  if (!currentUserId.equals(id)) throw new AppError("Permission Denied", 403);
+
+  await User.deleteOne({ _id: id });
+
+  res.status(200).json({
+    message: "User account deleted successfully",
+    user: {
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+      isVerified: user.isVerified,
+    },
+  });
+};
