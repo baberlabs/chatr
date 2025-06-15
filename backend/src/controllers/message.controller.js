@@ -77,6 +77,7 @@ export const sendMessage = async (req, res) => {
   res.status(201).json({
     message: "Message sent successfully",
     data: {
+      _id: newMessage._id,
       chatId: newMessage.chatId,
       text: newMessage.text,
       image: newMessage.image,
@@ -115,4 +116,30 @@ export const getMessagesByChatId = async (req, res) => {
   });
 };
 
-export const deleteMessage = () => {};
+export const deleteMessage = async (req, res) => {
+  const { messageId } = req.params;
+  const userId = req.user._id;
+  if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    throw new AppError("Invalid Message ID", 400);
+  }
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new AppError("Message Not Found", 404);
+  }
+  if (message.senderId.toString() !== userId.toString()) {
+    throw new AppError("You can only delete your own messages", 403);
+  }
+  await Message.deleteOne({ _id: messageId });
+  res.status(200).json({
+    message: "Message deleted successfully",
+    data: {
+      _id: messageId,
+      chatId: message.chatId,
+      text: message.text,
+      image: message.image,
+      senderId: message.senderId,
+      seen: message.seen,
+    },
+  });
+};
