@@ -66,7 +66,7 @@ describe("Chat Routes", () => {
     expect(cookies).toBeDefined();
   });
 
-  describe.only("POST /api/v1/chats", () => {
+  describe("POST /api/v1/chats", () => {
     const endpoint = "/api/v1/chats";
 
     it("should return `401` if user is not authenticated", async () => {
@@ -148,6 +148,81 @@ describe("Chat Routes", () => {
         message: "Chat already exists",
         data: {
           _id: res.body.data._id,
+          isGroup: false,
+          participants: expect.arrayContaining([userOneId, userTwoId]),
+          chatName: null,
+          groupAdmin: null,
+        },
+      });
+    });
+  });
+
+  describe("GET /api/v1/chats/:chatId", () => {
+    const endpointBase = "/api/v1/chats";
+
+    let chatId;
+
+    beforeEach(async () => {
+      const chatRes = await request(app)
+        .post("/api/v1/chats")
+        .set("Cookie", cookies)
+        .send({ receiverId: userTwoId });
+      expect(chatRes.status).toBe(201);
+      chatId = chatRes.body.data._id;
+    });
+
+    it("should return `401` is user is not authenticated", async () => {
+      const res = await request(app).get(`${endpointBase}/${chatId}`);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return `400` if `chatId` is invalid", async () => {
+      const res = await request(app)
+        .get(`${endpointBase}/invalid-chat-id`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid Chat ID");
+    });
+
+    it("should return `404` if `chatId` does not exist", async () => {
+      const nonExistentChatId = "507f1f77bcf86cd799439011";
+      const res = await request(app)
+        .get(`${endpointBase}/${nonExistentChatId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe("Chat Not Found");
+    });
+
+    it("should return `403` if user is not a participant in the chat", async () => {
+      const userThree = {
+        fullName: "User Three",
+        email: "userthree@email.com",
+        password: "strongPassword123",
+      };
+      const resThree = await request(app).post(regEndpoint).send(userThree);
+      expect(resThree.status).toBe(201);
+      const resLogin = await request(app)
+        .post(loginEndpoint)
+        .send({ email: userThree.email, password: userThree.password });
+      expect(resLogin.status).toBe(200);
+      const userThreeCookies = resLogin.headers["set-cookie"];
+      const res = await request(app)
+        .get(`${endpointBase}/${chatId}`)
+        .set("Cookie", userThreeCookies);
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe("You are not a participant of this chat");
+    });
+
+    it("should return `200` and return chat data if user is a participant", async () => {
+      const res = await request(app)
+        .get(`${endpointBase}/${chatId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: "Chat retrieved successfully",
+        data: {
+          _id: chatId,
           isGroup: false,
           participants: expect.arrayContaining([userOneId, userTwoId]),
           chatName: null,
