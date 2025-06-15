@@ -11,6 +11,6 @@ const router = Router();
 
 router.post("/", authenticateUser, catchAsync(sendMessage));
 router.get("/:chatId", authenticateUser, catchAsync(getMessagesByChatId));
-router.delete("/:id", authenticateUser, catchAsync(deleteMessage));
+router.delete("/:messageId", authenticateUser, catchAsync(deleteMessage));
 
 export default router;
