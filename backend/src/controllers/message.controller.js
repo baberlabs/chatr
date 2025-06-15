@@ -4,18 +4,30 @@ import cloudinary from "cloudinary";
 import { AppError } from "../utils/appError.js";
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import Chat from "../models/chat.model.js";
 
 export const sendMessage = async (req, res) => {
-  const { receiverId, text, image } = req.body;
+  const { chatId, text, image } = req.body;
   const senderId = req.user._id;
   const messageData = {};
 
-  if (!receiverId) {
-    throw new AppError("Missing User ID", 400);
-  }
+  if (!chatId) {
+    throw new AppError("Missing Chat ID", 400);
+  } else {
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      throw new AppError("Invalid Chat ID", 400);
+    }
+    const chat = await Chat.findById(chatId);
 
-  if (senderId.toString() === receiverId.toString()) {
-    throw new AppError("Cannot send message to yourself", 403);
+    if (!chat) {
+      throw new AppError("Chat Not Found", 404);
+    }
+
+    if (!chat.participants.includes(senderId)) {
+      throw new AppError("You are not a participant of this chat", 403);
+    }
+
+    messageData.chatId = chatId;
   }
 
   if (!text && !image) {
@@ -23,14 +35,18 @@ export const sendMessage = async (req, res) => {
   }
 
   if (text) {
-    if (text.trim() === "") {
+    if (text.trim() === "" && !image) {
       throw new AppError("Message content is missing", 400);
     }
+  }
 
-    if (text.trim().length > 1000) {
-      throw new AppError("Text exceeds 1000 characters limit", 400);
+  if (text) {
+    if (text.trim().length > 100) {
+      throw new AppError(
+        "Message text exceeds maximum length of 1000 characters",
+        400
+      );
     }
-
     messageData.text = text.trim();
   }
 
@@ -38,29 +54,22 @@ export const sendMessage = async (req, res) => {
     if (!/^data:image\/(png|jpeg|jpg);base64,/.test(image.trim())) {
       throw new AppError("Invalid Image Format", 400);
     }
-
     try {
-      const uploadRes = await cloudinary.uploader.upload(image.trim());
-      messageData.image = uploadRes.secure_url;
+      const uploadResult = await cloudinary.uploader.upload(image.trim(), {
+        folder: "chat_images",
+        resource_type: "image",
+      });
+
+      messageData.image = uploadResult.secure_url;
     } catch (error) {
-      throw new AppError("Image upload failed");
+      throw new AppError("Image upload failed", 500);
     }
   }
 
-  if (!mongoose.Types.ObjectId.isValid(receiverId)) {
-    throw new AppError("Invalid User ID", 400);
-  }
-
-  const user = await User.findById(receiverId);
-
-  if (!user) {
-    throw new AppError("User Not Found", 404);
-  }
-
   const newMessage = new Message({
-    senderId,
-    receiverId,
     ...messageData,
+    senderId,
+    seen: false,
   });
 
   await newMessage.save();
@@ -68,11 +77,10 @@ export const sendMessage = async (req, res) => {
   res.status(201).json({
     message: "Message sent successfully",
     data: {
-      _id: newMessage._id,
-      receiverId: newMessage.receiverId,
-      senderId: newMessage.senderId,
+      chatId: newMessage.chatId,
       text: newMessage.text,
       image: newMessage.image,
+      senderId: newMessage.senderId,
       seen: newMessage.seen,
     },
   });
