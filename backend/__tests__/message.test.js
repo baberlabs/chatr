@@ -567,4 +567,124 @@ describe("Message Routes", () => {
       });
     });
   });
+
+  describe.only("DELETE /api/v1/messages/:messageId", () => {
+    const endpoint = "/api/v1/messages";
+    const users = [
+      {
+        fullName: "User One",
+        email: "userone@example.com",
+        password: "password123",
+      },
+      {
+        fullName: "User Two",
+        email: "usertwo@example.com",
+        password: "password123",
+      },
+    ];
+    let userOneId;
+    let userTwoId;
+    let chatId;
+    let cookies;
+    let messageId;
+
+    beforeEach(async () => {
+      const regEndpoint = "/api/v1/auth/register";
+      const loginEndpoint = "/api/v1/auth/login";
+      const chatEndpoint = "/api/v1/chats";
+
+      const resOne = await request(app).post(regEndpoint).send(users[0]);
+      const resTwo = await request(app).post(regEndpoint).send(users[1]);
+
+      expect(resOne.status).toBe(201);
+      expect(resTwo.status).toBe(201);
+
+      userOneId = resOne.body.user._id;
+      userTwoId = resTwo.body.user._id;
+
+      const loginData = { email: users[0].email, password: users[0].password };
+      const loginRes = await request(app).post(loginEndpoint).send(loginData);
+      expect(loginRes.status).toBe(200);
+
+      cookies = loginRes.headers["set-cookie"];
+      expect(cookies).toBeDefined();
+
+      const chatRes = await request(app)
+        .post(chatEndpoint)
+        .set("Cookie", cookies)
+        .send({ receiverId: userTwoId });
+      expect(chatRes.status).toBe(201);
+      chatId = chatRes.body.data._id;
+
+      const messageRes = await request(app)
+        .post("/api/v1/messages")
+        .set("Cookie", cookies)
+        .send({ chatId, text: "Hello, this is a test message!" });
+      expect(messageRes.status).toBe(201);
+      messageId = messageRes.body.data._id;
+    });
+
+    it("should return `401` if user is not authenticated", async () => {
+      const res = await request(app).delete(`${endpoint}/${messageId}`);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+
+    it("should return `400` if `messageId` is not a valid Mongo ID", async () => {
+      const invalidMessageId = "invalid-message-id";
+      const res = await request(app)
+        .delete(`${endpoint}/${invalidMessageId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe("Invalid Message ID");
+    });
+
+    it("should return `404` if message with given id does not exist", async () => {
+      const nonExistentMessageId = "507f1f77bcf86cd799439011";
+      const res = await request(app)
+        .delete(`${endpoint}/${nonExistentMessageId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe("Message Not Found");
+    });
+
+    it("should return `403` if user is not the sender of the message", async () => {
+      const loginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: users[1].email, password: users[1].password });
+      expect(loginRes.status).toBe(200);
+      const userTwoCookies = loginRes.headers["set-cookie"];
+      const res = await request(app)
+        .delete(`${endpoint}/${messageId}`)
+        .set("Cookie", userTwoCookies);
+      expect(res.status).toBe(403);
+      expect(res.body.message).toBe("You can only delete your own messages");
+    });
+
+    it("should return `200` and delete the message successfully", async () => {
+      const res = await request(app)
+        .delete(`${endpoint}/${messageId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("Message deleted successfully");
+      expect(res.body.data).toMatchObject({
+        _id: messageId,
+        chatId,
+        senderId: userOneId,
+        text: "Hello, this is a test message!",
+      });
+    });
+
+    it("should remove the message from database after deletion", async () => {
+      await request(app)
+        .delete(`${endpoint}/${messageId}`)
+        .set("Cookie", cookies);
+      const res = await request(app)
+        .get(`/api/v1/messages/${chatId}`)
+        .set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(0);
+      expect(res.body.message).toBe("Messages retrieved successfully");
+    });
+  });
 });
