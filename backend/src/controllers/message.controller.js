@@ -86,6 +86,33 @@ export const sendMessage = async (req, res) => {
   });
 };
 
-export const getMessagesByChatId = () => {};
+export const getMessagesByChatId = async (req, res) => {
+  const { chatId } = req.params;
+  const userId = req.user._id;
+  if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    throw new AppError("Invalid Chat ID", 400);
+  }
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError("Chat Not Found", 404);
+  }
+  if (!chat.participants.includes(userId)) {
+    throw new AppError("You are not a participant of this chat", 403);
+  }
+  const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
+
+  res.status(200).json({
+    message: "Messages retrieved successfully",
+    data: messages.map((msg) => ({
+      _id: msg._id,
+      chatId: msg.chatId,
+      text: msg.text,
+      image: msg.image,
+      senderId: msg.senderId,
+      seen: msg.seen,
+      createdAt: msg.createdAt,
+    })),
+  });
+};
 
 export const deleteMessage = () => {};
