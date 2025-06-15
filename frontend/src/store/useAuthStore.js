@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 export const useAuthStore = create((set) => ({
   isRegistering: false,
   isLoggingIn: false,
+  isLoggingOut: false,
   isCheckingAuth: true,
   authUser: null,
 
@@ -38,6 +39,17 @@ export const useAuthStore = create((set) => ({
       console.error("Login error:", error);
     } finally {
       set({ isLoggingIn: false });
+    }
+  },
+  logout: async () => {
+    set({ isLoggingOut: true });
+    try {
+      await api.post("/auth/logout");
+      set({ authUser: null });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      set({ isLoggingOut: false });
     }
   },
 }));
