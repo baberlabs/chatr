@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 
 export const useAuthStore = create((set) => ({
   isRegistering: false,
+  isLoggingIn: false,
   isCheckingAuth: true,
   authUser: null,
 
@@ -26,6 +27,17 @@ export const useAuthStore = create((set) => ({
       console.error("Registration error:", error);
     } finally {
       set({ isRegistering: false });
+    }
+  },
+  login: async (credentials) => {
+    set({ isLoggingIn: true });
+    try {
+      const response = await api.post("/auth/login", credentials);
+      set({ authUser: response.data.user });
+    } catch (error) {
+      console.error("Login error:", error);
+    } finally {
+      set({ isLoggingIn: false });
     }
   },
 }));
