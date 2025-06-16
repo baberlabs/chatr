@@ -69,4 +69,13 @@ export const useAuthStore = create((set) => ({
       set({ isUpdatingProfile: false });
     }
   },
+
+  deleteAccount: async (userId) => {
+    try {
+      await api.delete(`/users/${userId}`);
+      set({ authUser: null });
+    } catch (error) {
+      console.error("Account deletion error:", error);
+    }
+  },
 }));

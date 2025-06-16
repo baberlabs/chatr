@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
+  const { authUser, isUpdatingProfile, updateProfile, deleteAccount } =
+    useAuthStore();
   const [profileData, setProfileData] = useState({
     fullName: authUser?.fullName || "Loading...",
     email: authUser?.email || "Loading...",
-    profilePic: authUser?.profilePic || "Loading...",
+    profilePic: authUser?.profilePic || "",
     isVerified: authUser?.isVerified || "Loading...",
   });
   const [fullNameEditMode, setFullNameEditMode] = useState(false);
@@ -21,7 +22,7 @@ const ProfilePage = () => {
     setProfileData({
       fullName: authUser?.fullName || "Loading...",
       email: authUser?.email || "Loading...",
-      profilePic: authUser?.profilePic || "Loading...",
+      profilePic: authUser?.profilePic || "",
       isVerified: authUser?.isVerified || "Loading...",
     });
   }, [authUser]);
@@ -72,6 +73,16 @@ const ProfilePage = () => {
     alert("Password updated successfully!");
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+    if (confirmDelete) {
+      await deleteAccount(authUser._id);
+      alert("Account deleted successfully.");
+    }
+  };
+
   return (
     <div className="bg-gray-300">
       <h2 className="text-2xl font-bold mb-4">Profile Page</h2>
@@ -79,7 +90,7 @@ const ProfilePage = () => {
       {/* ProfilePic */}
       <div>
         <img
-          src={profileData.profilePic}
+          src={profileData?.profilePic || "/avatar.png"}
           alt="Profile"
           className="size-50 rounded-full mr-4"
         />
@@ -193,6 +204,16 @@ const ProfilePage = () => {
         <h3 className="text-lg font-semibold">Account Information</h3>
         <p>Created At: {new Date(authUser?.createdAt).toLocaleString()}</p>
         <p>Updated At: {new Date(authUser?.updatedAt).toLocaleString()}</p>{" "}
+      </div>
+
+      {/* Delete */}
+      <div className="mt-4">
+        <button
+          onClick={handleDeleteAccount}
+          className="bg-red-700 font-bold text-white py-2 px-4 rounded-xl hover:underline"
+        >
+          Delete Account
+        </button>
       </div>
     </div>
   );
