@@ -11,14 +11,13 @@ import {
   it,
   jest,
 } from "@jest/globals";
-import cloudinary from "cloudinary";
 
 import app from "../src/app.js";
-import { text } from "express";
+import cloudinary from "../src/utils/cloudinary.js";
 
 let mongo;
 
-jest.mock("cloudinary", () => ({
+jest.mock("../src/utils/cloudinary.js", () => ({
   uploader: {
     upload: jest.fn(),
   },
@@ -105,7 +104,7 @@ describe("Message Routes", () => {
       const res = await request(app)
         .post(endpoint)
         .set("Cookie", cookies)
-        .send({ text });
+        .send({ text: "Hello" });
       expect(res.status).toBe(400);
       expect(res.body.message).toBe("Missing Chat ID");
     });
@@ -568,7 +567,7 @@ describe("Message Routes", () => {
     });
   });
 
-  describe.only("DELETE /api/v1/messages/:messageId", () => {
+  describe("DELETE /api/v1/messages/:messageId", () => {
     const endpoint = "/api/v1/messages";
     const users = [
       {
