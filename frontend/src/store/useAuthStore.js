@@ -2,11 +2,12 @@ import { create } from "zustand";
 import { api } from "../lib/api";
 
 export const useAuthStore = create((set) => ({
+  authUser: null,
+  isCheckingAuth: true,
   isRegistering: false,
   isLoggingIn: false,
   isLoggingOut: false,
-  isCheckingAuth: true,
-  authUser: null,
+  isUpdatingProfile: false,
 
   checkAuth: async () => {
     try {
@@ -19,6 +20,7 @@ export const useAuthStore = create((set) => ({
       set({ isCheckingAuth: false });
     }
   },
+
   register: async (userData) => {
     set({ isRegistering: true });
     try {
@@ -30,6 +32,7 @@ export const useAuthStore = create((set) => ({
       set({ isRegistering: false });
     }
   },
+
   login: async (credentials) => {
     set({ isLoggingIn: true });
     try {
@@ -41,6 +44,7 @@ export const useAuthStore = create((set) => ({
       set({ isLoggingIn: false });
     }
   },
+
   logout: async () => {
     set({ isLoggingOut: true });
     try {
@@ -50,6 +54,19 @@ export const useAuthStore = create((set) => ({
       console.error("Logout error:", error);
     } finally {
       set({ isLoggingOut: false });
+    }
+  },
+
+  updateProfile: async (userId, profileData) => {
+    set({ isUpdatingProfile: true });
+    try {
+      const response = await api.put(`/users/${userId}`, profileData);
+      set({ authUser: response.data.user });
+      return response.data.user;
+    } catch (error) {
+      console.error("Profile update error:", error);
+    } finally {
+      set({ isUpdatingProfile: false });
     }
   },
 }));
