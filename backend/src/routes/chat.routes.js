@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getAllChats,
   createChat,
   getChatById,
   deleteChat,
@@ -12,6 +13,7 @@ import { catchAsync } from "../utils/catchAsync.js";
 
 const router = Router();
 
+router.get("/", authenticateUser, catchAsync(getAllChats));
 router.post("/", authenticateUser, catchAsync(createChat));
 router.get("/:chatId", authenticateUser, catchAsync(getChatById));
 router.delete("/:chatId", authenticateUser, catchAsync(deleteChat));

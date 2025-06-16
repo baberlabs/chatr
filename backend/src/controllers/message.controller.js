@@ -81,6 +81,8 @@ export const sendMessage = async (req, res) => {
       image: newMessage.image,
       senderId: newMessage.senderId,
       seen: newMessage.seen,
+      createdAt: newMessage.createdAt,
+      updatedAt: newMessage.updatedAt,
     },
   });
 };

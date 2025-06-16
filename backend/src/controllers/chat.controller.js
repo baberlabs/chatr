@@ -3,6 +3,15 @@ import { AppError } from "../utils/appError.js";
 import User from "../models/user.model.js";
 import Chat from "../models/chat.model.js";
 
+export const getAllChats = async (req, res) => {
+  const userId = req.user._id;
+  const chats = await Chat.find({ participants: userId });
+  return res.status(200).json({
+    message: "Chats retrieved successfully",
+    data: chats,
+  });
+};
+
 export const createChat = async (req, res) => {
   const { receiverId } = req.body;
   const senderId = req.user._id;
