@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import { AppError } from "../utils/appError.js";
 import bcrypt from "bcryptjs";
+import cloudinary from "../utils/cloudinary.js";
 
 export const getAllUsers = async (req, res) => {
   const currentUserId = req.user._id;
@@ -87,7 +88,11 @@ export const updateUserProfile = async (req, res) => {
   }
 
   if (profilePic) {
-    update.profilePic = profilePic.trim();
+    if (!/^data:image\/(png|jpeg|jpg|webp);base64,/.test(profilePic.trim())) {
+      throw new AppError("Invalid Image Format", 400);
+    }
+    const uploadRes = await cloudinary.uploader.upload(profilePic.trim());
+    update.profilePic = uploadRes.secure_url;
   }
 
   async function updateUser(id, update) {
