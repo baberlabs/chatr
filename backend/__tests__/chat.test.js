@@ -66,6 +66,45 @@ describe("Chat Routes", () => {
     expect(cookies).toBeDefined();
   });
 
+  describe("GET /api/v1/chats", () => {
+    const endpoint = "/api/v1/chats";
+    it("should return `401` if user is not authenticated", async () => {
+      const res = await request(app).get(endpoint);
+      expect(res.status).toBe(401);
+      expect(res.body.message).toBe("Unauthorised - No Token");
+    });
+    it("should return `200` and an empty array if no chats exist", async () => {
+      const res = await request(app).get(endpoint).set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: "Chats retrieved successfully",
+        data: [],
+      });
+    });
+    it("should return `200` and an array of chats if chats exist", async () => {
+      const chatRes = await request(app)
+        .post("/api/v1/chats")
+        .set("Cookie", cookies)
+        .send({ receiverId: userTwoId });
+      expect(chatRes.status).toBe(201);
+      const chatId = chatRes.body.data._id;
+      const res = await request(app).get(endpoint).set("Cookie", cookies);
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: "Chats retrieved successfully",
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            _id: chatId,
+            isGroup: false,
+            participants: expect.arrayContaining([userOneId, userTwoId]),
+            chatName: null,
+            groupAdmin: null,
+          }),
+        ]),
+      });
+    });
+  });
+
   describe("POST /api/v1/chats", () => {
     const endpoint = "/api/v1/chats";
 
