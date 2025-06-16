@@ -4,8 +4,15 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import { beforeEach, describe, jest } from "@jest/globals";
 
 import app from "../src/app.js";
+import cloudinary from "../src/utils/cloudinary.js";
 
 let mongo;
+
+jest.mock("../src/utils/cloudinary.js", () => ({
+  uploader: {
+    upload: jest.fn(),
+  },
+}));
 
 beforeAll(async () => {
   jest.spyOn(console, "error").mockImplementation(() => {});
@@ -208,6 +215,8 @@ describe("User Routes", () => {
 
       cookies = loginRes.headers["set-cookie"];
       expect(cookies).toBeDefined();
+
+      cloudinary.uploader.upload.mockReset();
     });
 
     it("should return 401 if not authenticated", async () => {
@@ -399,16 +408,23 @@ describe("User Routes", () => {
     });
 
     it("should update profilePic successfully", async () => {
+      const base64Image =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA...";
+      const imageURL =
+        "https://res.cloudinary.com/demo/image/upload/v1234567890/sample.jpg";
+      cloudinary.uploader.upload.mockResolvedValue({
+        secure_url: imageURL,
+      });
       const res = await request(app)
         .put(`${endpointBase}/${userOneId}`)
         .set("Cookie", cookies)
-        .send({ profilePic: "https://generic.com/url" });
+        .send({ profilePic: base64Image });
       expect(res.status).toBe(200);
       expect(res.body.user).toMatchObject({
         _id: userOneId,
         fullName: users[0].fullName,
         email: users[0].email,
-        profilePic: "https://generic.com/url",
+        profilePic: imageURL,
         isVerified: false,
       });
       expect(res.body.user).not.toHaveProperty("password");
