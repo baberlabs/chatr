@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
-import cloudinary from "cloudinary";
-
+import cloudinary from "../utils/cloudinary.js";
 import { AppError } from "../utils/appError.js";
-import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import Chat from "../models/chat.model.js";
 
