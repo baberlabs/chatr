@@ -1,18 +1,24 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
+import { io } from "socket.io-client";
 
-export const useAuthStore = create((set) => ({
+const SOCKET_URL =
+  import.meta.env.VITE_LOCAL_BACKEND_URL || "http://localhost:5001";
+
+export const useAuthStore = create((set, get) => ({
   authUser: null,
   isCheckingAuth: true,
   isRegistering: false,
   isLoggingIn: false,
   isLoggingOut: false,
   isUpdatingProfile: false,
+  socket: null,
 
   checkAuth: async () => {
     try {
       const response = await api.get("/auth/status");
       set({ authUser: response.data.user });
+      get().connectSocket();
     } catch (error) {
       console.error("Authentication check failed:", error);
       set({ authUser: null });
@@ -26,6 +32,7 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await api.post("/auth/register", userData);
       set({ user: response.data.user });
+      get().connectSocket();
     } catch (error) {
       console.error("Registration error:", error);
     } finally {
@@ -38,6 +45,7 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await api.post("/auth/login", credentials);
       set({ authUser: response.data.user });
+      get().connectSocket();
     } catch (error) {
       console.error("Login error:", error);
     } finally {
@@ -50,6 +58,7 @@ export const useAuthStore = create((set) => ({
     try {
       await api.post("/auth/logout");
       set({ authUser: null });
+      get().disconnectSocket();
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -77,5 +86,19 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       console.error("Account deletion error:", error);
     }
+  },
+
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) return;
+
+    const socket = io(SOCKET_URL);
+    socket.connect();
+    set({ socket });
+  },
+
+  disconnectSocket: () => {
+    if (!get().socket) return;
+    get().socket.disconnect();
   },
 }));
