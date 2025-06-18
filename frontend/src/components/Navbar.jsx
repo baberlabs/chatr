@@ -38,7 +38,9 @@ const Navbar = () => {
                   isLoggingOut ? "cursor-progress" : "cursor-pointer"
                 }`}
               >
-                {isLoggingOut ? "Logging out..." : "Logout"}
+                {isLoggingOut
+                  ? "Logging out..."
+                  : `Logout, ${authUser?.fullName}`}
               </button>
             </li>
           )}

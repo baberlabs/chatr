@@ -8,13 +8,24 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isChatsLoading: false,
   isSendingMessage: false,
+  selectedUser: null,
+  selectedChatId: null,
+
+  setSelectedUser: (user) => {
+    if (!user) {
+      set({ selectedUser: null, selectedChatId: null });
+      return;
+    }
+    set({ selectedUser: user });
+    get().createChat(user._id);
+  },
+  setSelectedChatId: (chatId) => set({ selectedChatId: chatId }),
 
   getAllUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const response = await api.get("/users");
       set({ users: response.data.users });
-      return response.data.users;
     } catch (error) {
       console.error("Error fetching users:", error);
       set({ users: [] });
@@ -28,12 +39,23 @@ export const useChatStore = create((set, get) => ({
     try {
       const response = await api.get("/chats");
       set({ chats: response.data.data });
-      return response.data.data;
     } catch (error) {
       console.error("Error fetching chats:", error);
-      return [];
+      set({ chats: [] });
     } finally {
       set({ isChatsLoading: false });
+    }
+  },
+
+  createChat: async (receiverId) => {
+    try {
+      const response = await api.post("/chats", { receiverId });
+      const chatId = response.data.data._id;
+      set({ selectedChatId: chatId });
+      await get().getChatMessagesById(chatId);
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      return null;
     }
   },
 
@@ -41,22 +63,9 @@ export const useChatStore = create((set, get) => ({
     try {
       const response = await api.get(`/messages/${chatId}`);
       set({ currentChatMessages: response.data.data });
-      return response.data.data;
     } catch (error) {
       console.error("Error fetching chat messages by ID:", error);
       set({ currentChatMessages: [] });
-    }
-  },
-
-  createChat: async (receiverId) => {
-    try {
-      const response = await api.post("/chats", { receiverId });
-      console.log("Chat created:", response.data);
-      const newChat = response.data.data;
-      return newChat;
-    } catch (error) {
-      console.error("Error creating chat:", error);
-      return null;
     }
   },
 
@@ -64,15 +73,10 @@ export const useChatStore = create((set, get) => ({
     set({ isSendingMessage: true });
     try {
       const response = await api.post(`/messages`, message);
-      console.log("Message sent:", response.data);
       const newMessage = response.data.data;
-      console.log("New message:", newMessage);
-      const updatedMessages = [...get().currentChatMessages, newMessage];
-      set({ currentChatMessages: updatedMessages });
-      return newMessage;
+      set({ currentChatMessages: [...get().currentChatMessages, newMessage] });
     } catch (error) {
       console.error("Error sending message:", error);
-      return null;
     } finally {
       set({ isSendingMessage: false });
     }
