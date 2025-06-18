@@ -4,8 +4,9 @@ import cors from "cors";
 import path from "path";
 import registerRoutes from "./routes/index.js";
 import { globalErrorHandler } from "./utils/globalErrorHandler.js";
-import { app, httpServer } from "./utils/socket.js";
+import { setupSocket } from "./utils/socket.js";
 
+const app = express();
 const __dirname = path.resolve();
 
 app.use(
@@ -29,4 +30,5 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+const httpServer = setupSocket(app);
 export { httpServer };
