@@ -11,7 +11,7 @@ const io = new Server(httpServer, {
   },
 });
 
-const userSocketMap = {}; // { userId: socketId }
+const userSocketMap = {};
 
 io.on("connection", (socket) => {
   const { userId } = socket.handshake.query;
@@ -26,6 +26,19 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} has disconnected from socket "${socket.id}"`);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+
+  socket.on("joinRoom", (roomId) => {
+    socket.join(roomId);
+  });
+
+  socket.on("leaveRoom", (roomId) => {
+    socket.leave(roomId);
+  });
+
+  socket.on("sendMessage", (data) => {
+    const { roomId, message } = data;
+    io.to(roomId).emit("receiveMessage", { userId, message });
   });
 });
 

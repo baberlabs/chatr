@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
+import { useAuthStore } from "./useAuthStore";
+import { io } from "socket.io-client";
 
 export const useChatStore = create((set, get) => ({
   users: [],
@@ -12,10 +14,19 @@ export const useChatStore = create((set, get) => ({
   selectedChatId: null,
 
   setSelectedUser: (user) => {
+    const { socket } = useAuthStore.getState();
+    const prevChatId = get().selectedChatId;
+
+    if (socket && prevChatId) {
+      const prevRoom = `chat-${prevChatId}`;
+      socket.emit("leaveRoom", prevRoom);
+    }
+
     if (!user) {
       set({ selectedUser: null, selectedChatId: null });
       return;
     }
+
     set({ selectedUser: user });
     get().createChat(user._id);
   },
@@ -53,6 +64,11 @@ export const useChatStore = create((set, get) => ({
       const chatId = response.data.data._id;
       set({ selectedChatId: chatId });
       await get().getChatMessagesById(chatId);
+      const roomId = `chat-${chatId}`;
+      const { socket } = useAuthStore.getState();
+      if (socket) {
+        socket.emit("joinRoom", roomId);
+      }
     } catch (error) {
       console.error("Error creating chat:", error);
       return null;
@@ -74,7 +90,11 @@ export const useChatStore = create((set, get) => ({
     try {
       const response = await api.post(`/messages`, message);
       const newMessage = response.data.data;
-      set({ currentChatMessages: [...get().currentChatMessages, newMessage] });
+      const { socket } = useAuthStore.getState();
+      if (socket) {
+        const roomId = `chat-${get().selectedChatId}`;
+        socket.emit("sendMessage", { roomId, message: newMessage });
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {

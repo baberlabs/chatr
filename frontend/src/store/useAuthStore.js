@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
 import { io } from "socket.io-client";
+import { useChatStore } from "./useChatStore";
 
 const SOCKET_URL =
   import.meta.env.VITE_LOCAL_BACKEND_URL || "http://localhost:5001";
@@ -59,6 +60,15 @@ export const useAuthStore = create((set, get) => ({
     try {
       await api.post("/auth/logout");
       set({ authUser: null });
+      const { socket } = get();
+      const selectedChatId = useChatStore.getState().selectedChatId;
+      if (socket) {
+        socket.off("getOnlineUsers");
+        socket.off("receiveMessage");
+        if (selectedChatId) {
+          socket.emit("leaveRoom", `chat-${selectedChatId}`);
+        }
+      }
       get().disconnectSocket();
     } catch (error) {
       console.error("Logout error:", error);
@@ -102,10 +112,21 @@ export const useAuthStore = create((set, get) => ({
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    socket.on("receiveMessage", (data) => {
+      if (data.message.chatId !== useChatStore.getState().selectedChatId) {
+        alert("New message received in another chat");
+      } else {
+        useChatStore.setState((state) => ({
+          currentChatMessages: [...state.currentChatMessages, data.message],
+        }));
+      }
+    });
   },
 
   disconnectSocket: () => {
-    if (!get().socket) return;
-    get().socket.disconnect();
+    const { socket } = get();
+    if (!socket) return;
+    socket.disconnect();
   },
 }));
