@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { useChatStore } from "./useChatStore";
 
 const SOCKET_URL =
-  import.meta.env.VITE_LOCAL_BACKEND_URL || "http://localhost:5001";
+  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
