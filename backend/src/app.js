@@ -10,7 +10,7 @@ const __dirname = path.resolve();
 
 app.use(
   cors({
-    origin: process.env.LOCAL_FRONTEND_URL,
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
