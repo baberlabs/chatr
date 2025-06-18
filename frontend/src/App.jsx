@@ -6,14 +6,14 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import { useAuthStore } from "./store/useAuthStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
-  const secondRender = useRef(false);
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
+
+  console.log({ onlineUsers });
+
   useEffect(() => {
-    // if (secondRender.current) return;
-    // secondRender.current = true;
     checkAuth();
   }, [checkAuth]);
 

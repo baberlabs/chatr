@@ -16,7 +16,7 @@ const HomePage = () => {
     isUsersLoading,
   } = useChatStore();
 
-  const { authUser } = useAuthStore();
+  const { authUser, onlineUsers } = useAuthStore();
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentMessage, setCurrentMessage] = useState({});
   const messageEndRef = useRef(null);
@@ -52,11 +52,15 @@ const HomePage = () => {
     setCurrentMessage({});
   };
 
+  // &amp; type for ( is & amp;#40; and ) is &amp;#41;
+
   return (
     <div className="flex h-screen text-sm bg-gray-100 text-gray-800 overflow-hidden">
       {/* People Sidebar */}
       <aside className="w-64 border-r bg-white flex flex-col">
-        <header className="p-4 font-semibold border-b">People</header>
+        <header className="p-4 font-semibold border-b">
+          People &#40;{onlineUsers.length - 1} online&#41;
+        </header>
         <ul className="overflow-y-auto flex-1">
           {isUsersLoading ? (
             <li className="p-4 text-center text-gray-400">Loading...</li>
@@ -66,7 +70,7 @@ const HomePage = () => {
             users.map((user) => (
               <li
                 key={user._id}
-                className={`flex items-center gap-3 p-3 cursor-pointer border-b hover:bg-gray-50 ${
+                className={`relative flex items-center gap-3 p-3 cursor-pointer border-b hover:bg-gray-50 ${
                   selectedUser?._id === user._id ? "bg-blue-50" : ""
                 }`}
                 onClick={() => handleGetChat(user._id)}
@@ -76,6 +80,13 @@ const HomePage = () => {
                   alt={user.fullName}
                   className="w-10 h-10 rounded-full object-cover"
                 />
+                <span
+                  className={`size-3 rounded-full absolute top-3 right-3 border border-white ${
+                    onlineUsers.includes(user._id)
+                      ? "bg-green-500"
+                      : "bg-gray-300"
+                  }`}
+                ></span>
                 <div>
                   <p className="font-medium">{user.fullName}</p>
                   <p className="text-gray-500 text-xs">{user.email}</p>
