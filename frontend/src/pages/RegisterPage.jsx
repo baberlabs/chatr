@@ -1,17 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 
 const RegisterPage = () => {
-  const { register, isRegistering, checkAuth } = useAuthStore();
+  const { register, isRegistering } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
   });
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,7 +19,6 @@ const RegisterPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
     register(formData);
   };
 
