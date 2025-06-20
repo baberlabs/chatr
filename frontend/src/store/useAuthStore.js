@@ -33,7 +33,7 @@ export const useAuthStore = create((set, get) => ({
     set({ isRegistering: true });
     try {
       const response = await api.post("/auth/register", userData);
-      set({ user: response.data.user });
+      set({ authUser: response.data.user });
       get().connectSocket();
     } catch (error) {
       console.error("Registration error:", error);
