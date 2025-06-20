@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
+import { ChevronLeft } from "lucide-react";
 
 const ChatContainer = () => {
   return (
-    <main className="flex-1 flex flex-col">
+    <main className="flex flex-col h-screen w-full bg-gray-800 text-gray-100 overflow-hidden">
       <Header />
       <ChatWindow />
       <NewMessageForm />
@@ -15,8 +16,11 @@ const ChatContainer = () => {
 const Header = () => {
   const { selectedUser } = useChatStore();
   return (
-    <header className="p-4 border-b bg-white font-semibold text-lg shadow-sm">
-      {selectedUser?.fullName || "Select a conversation"}
+    <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-center gap-2 border-b border-gray-700">
+      <span className="md:block cursor-pointer">
+        <ChevronLeft />
+      </span>
+      <span>{selectedUser?.fullName || "Select a conversation"}</span>
     </header>
   );
 };
@@ -31,7 +35,7 @@ const ChatWindow = () => {
   }, [currentChatMessages]);
 
   return (
-    <section className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+    <section className="flex-1 overflow-y-auto p-4 space-y-4">
       {currentChatMessages.map((msg) => {
         const isMe = msg?.senderId === authUser?._id;
         return (
@@ -41,16 +45,16 @@ const ChatWindow = () => {
           >
             <div className="max-w-[70%] flex flex-col">
               <div
-                className={`px-4 py-2 rounded-2xl ${
+                className={`px-4 py-2 ${
                   isMe
-                    ? "bg-blue-600 text-white self-end"
-                    : "bg-gray-300 text-gray-800 self-start"
+                    ? "bg-blue-600 text-white self-end hover:bg-blue-700 rounded-tl-xl rounded-bl-xl rounded-tr-xl"
+                    : "bg-gray-700 text-gray-100 self-start hover:bg-gray-600 rounded-tr-xl rounded-br-xl rounded-tl-xl"
                 }`}
               >
                 {msg.text}
               </div>
               <time
-                className={`text-xs text-gray-500 mt-1 ${
+                className={`text-xs text-gray-400 mt-1 ${
                   isMe ? "text-right" : "text-left"
                 }`}
               >
@@ -81,10 +85,7 @@ const NewMessageForm = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSendMessage}
-      className="p-4 border-t bg-white flex gap-2"
-    >
+    <form onSubmit={handleSendMessage} className="p-4 bg-gray-800 flex gap-2">
       <input
         type="text"
         placeholder="Type a message..."
@@ -92,7 +93,7 @@ const NewMessageForm = () => {
         onChange={(e) =>
           setCurrentMessage({ ...currentMessage, text: e.target.value })
         }
-        className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300"
+        className="flex-1 rounded-lg px-3 py-2 text-sm outline-none bg-gray-700 text-gray-100 placeholder-gray-400"
       />
       <button
         type="submit"

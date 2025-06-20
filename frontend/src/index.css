@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+/* Applies to all scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track (background of the scrollbar) */
+::-webkit-scrollbar-track {
+  background: #1f2937; /* Tailwind's gray-800 */
+}
+
+/* Thumb (the draggable part) */
+::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* Tailwind's gray-600 */
+  border-radius: 6px;
+  border: 2px solid #1f2937; /* creates padding inside the thumb */
+}
+
+/* On hover */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* gray-500 */
+}

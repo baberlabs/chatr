@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { Link } from "react-router-dom";
+import {
+  BadgeAlert,
+  Camera,
+  Delete,
+  Edit,
+  LogOut,
+  LucideDelete,
+  Save,
+  Trash2,
+} from "lucide-react";
 
 const ProfilePage = () => {
-  const { authUser, isUpdatingProfile, updateProfile, deleteAccount } =
+  const { authUser, isUpdatingProfile, updateProfile, logout, deleteAccount } =
     useAuthStore();
   const [profileData, setProfileData] = useState({
     fullName: authUser?.fullName || "Loading...",
@@ -84,15 +95,15 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="bg-gray-300">
-      <h2 className="text-2xl font-bold mb-4">Profile Page</h2>
+    <div className="flex p-8 md:p-20 justify-center h-screen w-full flex-col bg-gray-900 text-gray-100">
+      <h2 className="text-2xl font-bold mb-8">Account Information</h2>
 
-      {/* ProfilePic */}
-      <div>
+      {/* Profile Picture */}
+      <div className="relative w-fit">
         <img
           src={profileData?.profilePic || "/avatar.png"}
           alt="Profile"
-          className="size-50 rounded-full mr-4"
+          className="size-40 md:size-48 rounded-full object-cover"
         />
         <label>
           <input
@@ -101,122 +112,139 @@ const ProfilePage = () => {
             className="hidden"
             onChange={handleProfilePicChange}
           />
-          <span className="text-blue-500 cursor-pointer">
-            Change Profile Picture
-          </span>
+          <div className="bg-blue-600 hover:bg-blue-700 absolute bottom-2 right-2 p-2 rounded-full cursor-pointer shadow-md transition">
+            <Camera size={18} />
+          </div>
         </label>
       </div>
 
-      {/* Full Name */}
-      <div className="mt-4 flex flex-row gap-2">
-        <label className="block mb-2">Full Name:</label>
-        {fullNameEditMode ? (
-          <input
-            type="text"
-            value={fullName}
-            className="border p-2 rounded"
-            onChange={(e) => setFullName(e.target.value)}
-          />
+      {/* Editable Fields */}
+      {[
+        {
+          label: "Full Name",
+          value: fullName,
+          setValue: setFullName,
+          isEditing: fullNameEditMode,
+          toggleEdit: setFullNameEditMode,
+          handleSave: handleFullNameChange,
+          type: "text",
+        },
+        {
+          label: "Email",
+          value: email,
+          setValue: setEmail,
+          isEditing: emailEditMode,
+          toggleEdit: setEmailEditMode,
+          handleSave: handleEmailChange,
+          type: "email",
+        },
+        {
+          label: "Password",
+          value: passwordEditMode ? password : "*********",
+          setValue: setPassword,
+          isEditing: passwordEditMode,
+          toggleEdit: setPasswordEditMode,
+          handleSave: handlePasswordChange,
+          type: "password",
+        },
+      ].map(
+        ({
+          label,
+          value,
+          setValue,
+          isEditing,
+          toggleEdit,
+          handleSave,
+          type,
+        }) => (
+          <div
+            key={label}
+            className="mt-6 flex flex-col gap-2 relative min-w-[300px] max-w-md"
+          >
+            <label className="text-sm font-semibold">{label}</label>
+            <input
+              type={type}
+              value={value}
+              disabled={!isEditing}
+              onChange={(e) => isEditing && setValue(e.target.value)}
+              className={`bg-gray-800 p-2 rounded text-sm ${
+                isEditing ? "text-gray-100" : "text-gray-400"
+              }`}
+            />
+            <button
+              onClick={() => {
+                toggleEdit(!isEditing);
+                if (isEditing) handleSave();
+              }}
+              className="absolute right-2 top-8 text-white p-1 rounded-lg hover:text-blue-400 transition"
+            >
+              {isEditing ? <Save size={18} /> : <Edit size={18} />}
+            </button>
+          </div>
+        )
+      )}
+
+      {/* Metadata */}
+      <div className="mt-6 text-sm text-gray-400">
+        Member since{" "}
+        {authUser?.createdAt
+          ? timeAgo(new Date(authUser.createdAt))
+          : "Loading..."}
+      </div>
+
+      {/* Verification */}
+      <div className="mt-6">
+        {profileData.isVerified === true ? (
+          <span className="text-green-400 font-semibold">Verified</span>
         ) : (
-          <span>{fullName}</span>
+          <button
+            onClick={() => alert("Verification process not implemented yet.")}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-xl text-sm font-medium shadow-md transition"
+          >
+            <BadgeAlert size={18} />
+            Verify your email
+          </button>
         )}
+      </div>
+
+      {/* Logout */}
+      <div className="mt-6">
         <button
-          onClick={() => {
-            setFullNameEditMode(!fullNameEditMode);
-            if (fullNameEditMode) {
-              handleFullNameChange();
-            }
-          }}
-          className="ml-2 text-blue-500"
+          onClick={() => logout()}
+          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 py-2 px-4 rounded-xl text-sm font-medium shadow-md transition"
         >
-          {fullNameEditMode ? "Save" : "Change Full Name"}
+          <LogOut size={18} />
+          Log out from your account now
         </button>
       </div>
 
-      {/* Email */}
-      <div className="mt-4 flex flex-row gap-2">
-        <label className="block mb-2">Email:</label>
-        {emailEditMode ? (
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 rounded"
-          />
-        ) : (
-          <span>{email}</span>
-        )}
-        <button
-          onClick={() => {
-            setEmailEditMode(!emailEditMode);
-            if (emailEditMode) {
-              handleEmailChange();
-            }
-          }}
-          className="ml-2 text-blue-500"
-        >
-          {emailEditMode ? "Save" : "Change Email"}
-        </button>
-      </div>
-
-      {/* Password */}
-      <div className="mt-4 flex flex-row gap-2">
-        <label className="block mb-2">Password:</label>
-        {passwordEditMode ? (
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 rounded"
-          />
-        ) : (
-          <span>********</span>
-        )}
-        <button
-          onClick={() => {
-            setPasswordEditMode(!passwordEditMode);
-            if (passwordEditMode) {
-              handlePasswordChange();
-            }
-          }}
-          className="ml-2 text-blue-500"
-        >
-          {passwordEditMode ? "Save" : "Change Password"}
-        </button>
-      </div>
-
-      {/* Verification Status */}
-      <div className="mt-4 flex flex-row gap-2">
-        <label className="block mb-2">Verification Status:</label>
-        <span>
-          {profileData.isVerified === true ? "Verified" : "Not Verified"}
-        </span>
-        <button
-          onClick={() => alert("Verification process is not implemented yet.")}
-          className="ml-2 text-blue-500"
-        >
-          Verify Account
-        </button>
-      </div>
-
-      {/* Additional Information: createdAt and updatedAt */}
-      <div className="mt-4">
-        <h3 className="text-lg font-semibold">Account Information</h3>
-        <p>Created At: {new Date(authUser?.createdAt).toLocaleString()}</p>
-        <p>Updated At: {new Date(authUser?.updatedAt).toLocaleString()}</p>{" "}
-      </div>
-
-      {/* Delete */}
-      <div className="mt-4">
+      {/* Delete Account */}
+      <div className="mt-6">
         <button
           onClick={handleDeleteAccount}
-          className="bg-red-700 font-bold text-white py-2 px-4 rounded-xl hover:underline"
+          className="flex items-center gap-2 bg-red-700 hover:bg-red-800 py-2 px-4 rounded-xl text-sm font-medium shadow-md transition"
         >
-          Delete Account
+          <Trash2 size={18} />
+          Permanently delete your account
         </button>
       </div>
     </div>
   );
+};
+
+const timeAgo = (date) => {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  let interval = Math.floor(seconds / 31536000);
+  if (interval > 1) return `${interval} years ago`;
+  interval = Math.floor(seconds / 2592000);
+  if (interval > 1) return `${interval} months ago`;
+  interval = Math.floor(seconds / 86400);
+  if (interval > 1) return `${interval} days ago`;
+  interval = Math.floor(seconds / 3600);
+  if (interval > 1) return `${interval} hours ago`;
+  interval = Math.floor(seconds / 60);
+  if (interval > 1) return `${interval} minutes ago`;
+  return `${seconds} seconds ago`;
 };
 
 export default ProfilePage;

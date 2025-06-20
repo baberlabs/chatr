@@ -1,5 +1,6 @@
 import { use, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { BotMessageSquare } from "lucide-react";
 
 const LoginPage = () => {
   const { isLoggingIn, login } = useAuthStore();
@@ -21,10 +22,13 @@ const LoginPage = () => {
     login(formData);
   };
   return (
-    <div className="flex items-center justify-center h-screen flex-col">
-      <h1 className="text-4xl font-bold">Login Page</h1>
+    <div className="flex items-center justify-center h-screen w-full flex-col bg-gray-700 text-gray-100 ">
+      <h1 className="text-2xl font-black flex flex-row-reverse justify-between items-center gap-2">
+        <BotMessageSquare /> Chatr
+      </h1>
 
-      <form className="mt-8 w-80">
+      <form className="mt-10 w-80">
+        <h2 className="text-4xl font-bold mb-8 text-center">Welcome</h2>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2" htmlFor="email">
             Email
@@ -33,7 +37,7 @@ const LoginPage = () => {
             type="email"
             id="email"
             name="email"
-            className="w-full p-2 border border-gray-300 rounded"
+            className="w-full p-2 bg-gray-800 rounded"
             placeholder="Enter your email"
             value={formData.email}
             onChange={handleChange}
@@ -47,7 +51,7 @@ const LoginPage = () => {
             type="password"
             id="password"
             name="password"
-            className="w-full p-2 border border-gray-300 rounded"
+            className="w-full p-2 bg-gray-800 rounded"
             placeholder="Enter your password"
             value={formData.password}
             onChange={handleChange}
@@ -56,7 +60,7 @@ const LoginPage = () => {
         {isLoggingIn ? (
           <button
             type="submit"
-            className="w-full bg-blue-900 text-white p-2 rounded transition duration-200 cursor-progress italic font-bold"
+            className="mt-2 w-full bg-blue-900 text-white p-2 rounded transition duration-200 cursor-progress italic font-bold"
             disabled={isLoggingIn}
           >
             Logging In...
@@ -64,16 +68,16 @@ const LoginPage = () => {
         ) : (
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
+            className="mt-2 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 font-bold cursor-pointer transition-colors"
             onClick={handleSubmit}
           >
             Login
           </button>
         )}
       </form>
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-gray-300">
         Don't have an account?{" "}
-        <a href="/register" className="text-blue-500 hover:underline">
+        <a href="/register" className="text-gray-100 underline">
           Register here
         </a>
         .
