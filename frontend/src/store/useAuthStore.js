@@ -50,7 +50,7 @@ export const useAuthStore = create((set, get) => ({
       console.error("Registration error:", error);
       set({
         isError: true,
-        error: error.response?.data?.message || "Login failed",
+        error: error.response?.data?.message || "Registration failed",
       });
       setTimeout(() => {
         set({
