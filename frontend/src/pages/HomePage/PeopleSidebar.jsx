@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
+import { User } from "lucide-react";
 
 const PeopleSidebar = () => {
   const { onlineUsers } = useAuthStore();
@@ -29,8 +30,15 @@ const PeopleSidebar = () => {
 
 const Header = ({ onlineUsers }) => {
   return (
-    <header className="p-4 font-semibold shadow-sm bg-gray-900 text-gray-100 border-b border-gray-800">
-      People &#40;{onlineUsers.length - 1} online&#41;
+    <header className="p-4 font-semibold shadow-sm bg-gray-900 text-gray-100 border-b border-gray-800 flex flex-row justify-between items-center">
+      <div className="flex flex-row items-center gap-2">
+        <User />
+        People
+      </div>
+      <div className="bg-green-900/80 w-fit py-1 px-2 text-xs rounded-xl flex flex-row items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+        <div>{onlineUsers.length - 1} online</div>
+      </div>
     </header>
   );
 };
