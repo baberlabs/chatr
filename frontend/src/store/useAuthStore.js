@@ -16,6 +16,17 @@ export const useAuthStore = create((set, get) => ({
   socket: null,
   onlineUsers: [],
 
+  // Errors
+  isError: false,
+  error: null,
+
+  resetErrors: () => {
+    set({
+      isError: false,
+      error: null,
+    });
+  },
+
   checkAuth: async () => {
     try {
       const response = await api.get("/auth/status");
@@ -37,6 +48,16 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       console.error("Registration error:", error);
+      set({
+        isError: true,
+        error: error.response?.data?.message || "Login failed",
+      });
+      setTimeout(() => {
+        set({
+          isError: false,
+          error: null,
+        });
+      }, 10000);
     } finally {
       set({ isRegistering: false });
     }
@@ -44,12 +65,23 @@ export const useAuthStore = create((set, get) => ({
 
   login: async (credentials) => {
     set({ isLoggingIn: true });
+    get().resetErrors();
     try {
       const response = await api.post("/auth/login", credentials);
       set({ authUser: response.data.user });
       get().connectSocket();
     } catch (error) {
       console.error("Login error:", error);
+      set({
+        isError: true,
+        error: error.response?.data?.message || "Login failed",
+      });
+      setTimeout(() => {
+        set({
+          isError: false,
+          error: null,
+        });
+      }, 10000);
     } finally {
       set({ isLoggingIn: false });
     }

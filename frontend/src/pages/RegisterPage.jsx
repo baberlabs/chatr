@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { BotMessageSquare } from "lucide-react";
 
 const RegisterPage = () => {
-  const { register, isRegistering } = useAuthStore();
+  const { register, isRegistering, error, isError } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -72,6 +72,12 @@ const RegisterPage = () => {
             onChange={handleChange}
           />
         </div>
+        {isError && (
+          <div className="text-red-500 text-sm mb-2">
+            <span className="font-bold">{error || "An error occurred"}</span> .
+            Please try again.
+          </div>
+        )}
         {isRegistering ? (
           <button
             type="submit"

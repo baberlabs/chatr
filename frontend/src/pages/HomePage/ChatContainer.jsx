@@ -4,11 +4,12 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { ChevronLeft } from "lucide-react";
 
 const ChatContainer = () => {
+  const { selectedUser } = useChatStore();
   return (
     <main className="flex flex-col h-screen w-full bg-gray-800 text-gray-100 overflow-hidden">
       <Header />
       <ChatWindow />
-      <NewMessageForm />
+      {selectedUser && <NewMessageForm />}
     </main>
   );
 };

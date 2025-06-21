@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { BotMessageSquare } from "lucide-react";
 
 const LoginPage = () => {
-  const { isLoggingIn, login } = useAuthStore();
+  const { isLoggingIn, login, error, isError } = useAuthStore();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -57,6 +57,12 @@ const LoginPage = () => {
             onChange={handleChange}
           />
         </div>
+        {isError && (
+          <div className="text-red-500 text-sm mb-2">
+            <span className="font-bold">{error || "An error occurred"}</span> .
+            Please try again.
+          </div>
+        )}
         {isLoggingIn ? (
           <button
             type="submit"
@@ -77,7 +83,10 @@ const LoginPage = () => {
       </form>
       <p className="mt-4 text-sm text-gray-300">
         Don't have an account?{" "}
-        <a href="/register" className="text-gray-100 underline">
+        <a
+          href="/register"
+          className="text-gray-100 underline hover:text-blue-400 hover:font-bold transition"
+        >
           Register here
         </a>
         .
