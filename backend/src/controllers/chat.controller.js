@@ -5,7 +5,10 @@ import Chat from "../models/chat.model.js";
 
 export const getAllChats = async (req, res) => {
   const userId = req.user._id;
-  const chats = await Chat.find({ participants: userId });
+  const chats = await Chat.find({ participants: userId }).sort({
+    updatedAt: -1,
+  });
+
   return res.status(200).json({
     message: "Chats retrieved successfully",
     data: chats,
@@ -44,6 +47,9 @@ export const createChat = async (req, res) => {
         participants: existingChat.participants,
         chatName: existingChat.chatName,
         groupAdmin: existingChat.groupAdmin,
+        latestMessage: existingChat.latestMessage,
+        createdAt: existingChat.createdAt,
+        updatedAt: existingChat.updatedAt,
       },
     });
   }
@@ -53,6 +59,7 @@ export const createChat = async (req, res) => {
     participants: [senderId, receiverId],
     chatName: null,
     groupAdmin: null,
+    latestMessage: null,
   });
 
   await newChat.save();
@@ -65,6 +72,9 @@ export const createChat = async (req, res) => {
       participants: newChat.participants,
       chatName: newChat.chatName,
       groupAdmin: newChat.groupAdmin,
+      latestMessage: newChat.latestMessage,
+      createdAt: newChat.createdAt,
+      updatedAt: newChat.updatedAt,
     },
   });
 };
@@ -95,6 +105,9 @@ export const getChatById = async (req, res) => {
       participants: chat.participants,
       chatName: chat.chatName,
       groupAdmin: chat.groupAdmin,
+      latestMessage: chat.latestMessage,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
     },
   });
 };

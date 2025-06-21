@@ -72,6 +72,9 @@ export const sendMessage = async (req, res) => {
 
   await newMessage.save();
 
+  // Update the latest message in the chat
+  await Chat.findByIdAndUpdate(chatId, { latestMessage: newMessage });
+
   res.status(201).json({
     message: "Message sent successfully",
     data: {

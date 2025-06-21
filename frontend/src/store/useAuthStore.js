@@ -146,13 +146,30 @@ export const useAuthStore = create((set, get) => ({
     });
 
     socket.on("receiveMessage", (data) => {
-      if (data.message.chatId !== useChatStore.getState().selectedChatId) {
-        alert("New message received in another chat");
-      } else {
+      const message = data.message;
+      const chatId = message.chatId;
+      const { selectedChatId, chats } = useChatStore.getState();
+
+      if (chatId === selectedChatId) {
         useChatStore.setState((state) => ({
-          currentChatMessages: [...state.currentChatMessages, data.message],
+          currentChatMessages: [...state.currentChatMessages, message],
         }));
       }
+
+      const updatedChats = chats
+        .map((chat) => {
+          return chat._id === chatId
+            ? { ...chat, latestMessage: message }
+            : chat;
+        })
+        .sort((a, b) => {
+          return (
+            new Date(b.latestMessage.createdAt) -
+            new Date(a.latestMessage.createdAt)
+          );
+        });
+
+      useChatStore.setState({ chats: updatedChats });
     });
   },
 

@@ -158,6 +158,9 @@ describe("Chat Routes", () => {
           participants: expect.arrayContaining([userOneId, userTwoId]),
           chatName: null,
           groupAdmin: null,
+          latestMessage: null,
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
         },
       });
     });
