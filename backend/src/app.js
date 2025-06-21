@@ -4,7 +4,6 @@ import cors from "cors";
 import path from "path";
 import registerRoutes from "./routes/index.js";
 import { globalErrorHandler } from "./utils/globalErrorHandler.js";
-import { setupSocket } from "./utils/socket.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -30,5 +29,4 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const httpServer = setupSocket(app);
-export { httpServer };
+export default app;
