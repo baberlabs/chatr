@@ -101,4 +101,14 @@ export const useChatStore = create((set, get) => ({
       set({ isSendingMessage: false });
     }
   },
+
+  getMessageById: async (messageId) => {
+    try {
+      const message = await api.get(`/messages/message/${messageId}`);
+      return message.data.data;
+    } catch (error) {
+      console.log("Error retrieving message", error);
+      return null;
+    }
+  },
 }));
