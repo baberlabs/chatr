@@ -25,8 +25,8 @@ const RegisterPage = () => {
 
   return (
     <div className="flex items-center justify-center h-screen w-full flex-col bg-gray-700 text-gray-100">
-      <h1 className="text-2xl font-black flex flex-row-reverse justify-between items-center gap-2">
-        <BotMessageSquare /> Chatr
+      <h1 className="text-4xl font-black flex flex-row-reverse justify-between items-center gap-2 text-blue-400/90">
+        <BotMessageSquare className="size-10 animate-bounce" /> Chatr
       </h1>
       <form className="mt-10 w-80">
         <h2 className="text-4xl font-bold mb-8 text-center">Register</h2>
