@@ -3,7 +3,7 @@ import ChatContainer from "./ChatContainer";
 
 const HomePage = () => {
   return (
-    <div className="flex h-screen text-sm bg-gray-100 text-gray-800 overflow-hidden">
+    <div className="flex h-screen w-full text-sm bg-gray-900 text-gray-100">
       <PeopleSidebar />
       <ChatContainer />
     </div>

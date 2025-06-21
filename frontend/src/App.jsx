@@ -23,7 +23,7 @@ const App = () => {
     );
   }
   return (
-    <div>
+    <div className="min-h-screen bg-gray-100 flex flex-row">
       <Navbar />
       <Routes>
         <Route
