@@ -8,7 +8,6 @@ export const sendMessage = async (req, res) => {
   const { chatId, text, image } = req.body;
   const senderId = req.user._id;
   const messageData = {};
-  let latestMessage = null;
 
   if (!chatId) {
     throw new AppError("Missing Chat ID", 400);
@@ -47,7 +46,6 @@ export const sendMessage = async (req, res) => {
       );
     }
     messageData.text = text.trim();
-    latestMessage = text.trim();
   }
 
   if (image) {
@@ -61,7 +59,6 @@ export const sendMessage = async (req, res) => {
       });
 
       messageData.image = uploadResult.secure_url;
-      latestMessage = "New image sent";
     } catch (error) {
       throw new AppError("Image upload failed", 500);
     }
@@ -76,7 +73,7 @@ export const sendMessage = async (req, res) => {
   await newMessage.save();
 
   // Update the latest message in the chat
-  await Chat.findByIdAndUpdate(chatId, { latestMessage: newMessage._id });
+  await Chat.findByIdAndUpdate(chatId, { latestMessage: newMessage });
 
   res.status(201).json({
     message: "Message sent successfully",
@@ -148,19 +145,4 @@ export const deleteMessage = async (req, res) => {
       seen: message.seen,
     },
   });
-};
-
-// Untested
-export const getMessageById = async (req, res) => {
-  const { messageId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(messageId)) {
-    throw new AppError("Invalid Message ID", 404);
-  }
-
-  const message = await Message.findById(messageId);
-
-  res
-    .status(200)
-    .json({ message: "Message retrieved successfully", data: message });
 };

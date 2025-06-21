@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
-import { Search, User } from "lucide-react";
+import { User } from "lucide-react";
+import { displayDate } from "../../lib/displayDate";
 
 const PeopleSidebar = () => {
-  const { users, isUsersLoading, getAllUsers, getAllChats, setSelectedUser } =
-    useChatStore();
+  const { users, isChatsLoading, getAllUsers, getAllChats } = useChatStore();
   const [newFriendsSearch, setNewFriendsSearch] = useState("");
 
   useEffect(() => {
@@ -13,9 +13,9 @@ const PeopleSidebar = () => {
     getAllChats();
   }, [getAllUsers, getAllChats]);
 
-  const UsersLoading = isUsersLoading;
-  const NoUsers = !isUsersLoading && users.length === 0;
-  const UsersLoad = !isUsersLoading && users.length > 0;
+  const ChatsLoading = isChatsLoading;
+  const NoChats = !isChatsLoading && users.length === 0;
+  const ChatsLoaded = !isChatsLoading && users.length > 0;
 
   return (
     <aside className="w-fit flex flex-col min-w-[240px]">
@@ -30,10 +30,9 @@ const PeopleSidebar = () => {
         />
       )}
       <ul className="overflow-y-auto">
-        {UsersLoading && <UsersLoadingPlaceholder />}
-        {NoUsers && <NoUsersPlaceholder />}
-        {/* {UsersLoad && <UsersList onlineUsers={onlineUsers} users={users} />} */}
-        {UsersLoad && <ChatsList />}
+        {ChatsLoading && <ChatsLoadingPlaceholder />}
+        {NoChats && <NoChatsPlaceholder />}
+        {ChatsLoaded && <ChatsList />}
       </ul>
     </aside>
   );
@@ -115,11 +114,11 @@ const NewFriends = ({ newFriendsSearch, setNewFriendsSearch }) => {
   );
 };
 
-const UsersLoadingPlaceholder = () => {
+const ChatsLoadingPlaceholder = () => {
   return <li className="p-4 text-center text-gray-500">Loading...</li>;
 };
 
-const NoUsersPlaceholder = () => {
+const NoChatsPlaceholder = () => {
   return (
     <li className="p-4 text-center text-gray-500">
       No users found. Start a conversation!
@@ -127,67 +126,10 @@ const NoUsersPlaceholder = () => {
   );
 };
 
-const UsersList = ({ onlineUsers, users }) => {
-  const { setSelectedUser, selectedUser } = useChatStore();
-
-  return (
-    <ul className="overflow-y-auto flex-1">
-      {users.map((user) => (
-        <li
-          key={user._id}
-          className={`relative flex items-center gap-3 p-3 pr-5 cursor-pointer hover:bg-gray-800 transition ${
-            selectedUser?._id === user._id ? "bg-gray-800" : ""
-          }`}
-          onClick={() => setSelectedUser(user)}
-        >
-          <img
-            src={user.profilePic || "/avatar.png"}
-            alt={user.fullName}
-            className="w-10 h-10 rounded-full object-cover"
-          />
-          {onlineUsers.includes(user._id) && (
-            <span
-              className={`size-3 rounded-full absolute top-3 left-11 bg-green-400`}
-            ></span>
-          )}
-          <div>
-            <p className="font-medium">{user.fullName}</p>
-            <p className="text-gray-400 text-xs">{user.email}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-};
-
 const ChatsList = () => {
   const { authUser, onlineUsers } = useAuthStore();
-  const {
-    chats,
-    isChatsLoading,
-    users,
-    setSelectedUser,
-    selectedUser,
-    getMessageById,
-  } = useChatStore();
-
-  const [latestMessages, setLatestMessages] = useState({});
-
-  useEffect(() => {
-    async function fetchAllLatest() {
-      const map = {};
-      for (const chat of chats) {
-        const messageId = chat.latestMessage;
-        if (messageId) {
-          map[chat._id] = await getMessageById(messageId);
-        } else {
-          map[chat._id] = "No message";
-        }
-      }
-      setLatestMessages(map);
-    }
-    fetchAllLatest();
-  }, [chats, getMessageById]);
+  const { chats, isChatsLoading, users, setSelectedUser, selectedUser } =
+    useChatStore();
 
   if (isChatsLoading) {
     return <li className="p-4 text-center text-gray-500">Loading...</li>;
@@ -206,13 +148,8 @@ const ChatsList = () => {
       {chats.map((chat) => {
         const otherUserId = chat.participants.find((id) => id !== authUser._id);
         const otherUser = users.filter((user) => user._id === otherUserId)[0];
-
-        const latestMessage = latestMessages[chat._id];
-        const latestMessageText = latestMessage?.text || "No message";
-        const isMyMessage = latestMessage?.senderId !== otherUserId;
-
-        // Format date: if today, show time; if yesterday, show "yesterday"; else show date
         const date = displayDate(chat.updatedAt);
+        const isOtherUser = otherUser?._id === authUser?._id;
 
         return (
           <li
@@ -235,7 +172,9 @@ const ChatsList = () => {
             <div className="">
               <p>{otherUser?.fullName || "Unknown User"}</p>
               <p className="text-gray-400 text-xs">
-                {`${isMyMessage ? "You: " : ""} ${latestMessageText}`}
+                {`${isOtherUser ? "" : "You: "} ${
+                  chat.latestMessage?.text || "No message"
+                }`}
               </p>
             </div>
             <span className="absolute text-gray-500 text-[10px] right-2 top-3">
@@ -249,31 +188,3 @@ const ChatsList = () => {
 };
 
 export default PeopleSidebar;
-
-function displayDate(date) {
-  let displayDate = "";
-  const updatedAt = new Date(date);
-  const now = new Date();
-  const isToday =
-    updatedAt.getDate() === now.getDate() &&
-    updatedAt.getMonth() === now.getMonth() &&
-    updatedAt.getFullYear() === now.getFullYear();
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    updatedAt.getDate() === yesterday.getDate() &&
-    updatedAt.getMonth() === yesterday.getMonth() &&
-    updatedAt.getFullYear() === yesterday.getFullYear();
-
-  if (isToday) {
-    displayDate = updatedAt.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } else if (isYesterday) {
-    displayDate = "yesterday";
-  } else {
-    displayDate = updatedAt.toLocaleDateString();
-  }
-  return displayDate;
-}
