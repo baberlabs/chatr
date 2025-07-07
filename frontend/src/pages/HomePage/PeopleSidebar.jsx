@@ -69,7 +69,8 @@ const Header = ({ setNewFriendsSearch, newFriendsSearch }) => {
 
 const NewFriends = ({ newFriendsSearch, setNewFriendsSearch }) => {
   const { onlineUsers } = useAuthStore();
-  const { users, getAllChats, setSelectedUser, createChat } = useChatStore();
+  const { users, getAllChats, setSelectedUser, createChat, setChatMode } =
+    useChatStore();
 
   return (
     <div className="border-b border-gray-800 bg-gray-900 text-gray-100 pt-4">
@@ -92,6 +93,7 @@ const NewFriends = ({ newFriendsSearch, setNewFriendsSearch }) => {
                 await getAllChats();
                 setSelectedUser(user);
                 setNewFriendsSearch("");
+                setChatMode(true);
               }}
             >
               <img
