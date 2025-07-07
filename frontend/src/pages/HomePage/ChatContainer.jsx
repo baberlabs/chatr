@@ -20,15 +20,17 @@ const ChatContainer = ({ mobile }) => {
 };
 
 const Header = () => {
-  const { selectedUser, setChatMode } = useChatStore();
+  const { selectedUser, setChatMode, chatMode } = useChatStore();
   return (
     <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-center gap-2 border-b border-gray-700">
-      <span
-        className="md:block cursor-pointer"
-        onClick={() => setChatMode(false)}
-      >
-        <ChevronLeft />
-      </span>
+      {chatMode && (
+        <span
+          className="md:block cursor-pointer"
+          onClick={() => setChatMode(false)}
+        >
+          <ChevronLeft />
+        </span>
+      )}
       <span>{selectedUser?.fullName || "Select a conversation"}</span>
     </header>
   );
