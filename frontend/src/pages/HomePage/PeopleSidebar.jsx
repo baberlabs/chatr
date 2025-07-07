@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { User } from "lucide-react";
 import { displayDate } from "../../lib/displayDate";
 
 const PeopleSidebar = () => {
-  const { users, isChatsLoading, getAllUsers, getAllChats } = useChatStore();
+  const { users, isChatsLoading, getAllUsers, getAllChats, chats } =
+    useChatStore();
   const [newFriendsSearch, setNewFriendsSearch] = useState("");
 
   useEffect(() => {
@@ -18,7 +19,7 @@ const PeopleSidebar = () => {
   const ChatsLoaded = !isChatsLoading && users.length > 0;
 
   return (
-    <aside className="w-fit flex flex-col min-w-[240px]">
+    <aside className="flex flex-col w-full sm:w-fit sm:min-w-[240px] ">
       <Header
         setNewFriendsSearch={setNewFriendsSearch}
         newFriendsSearch={newFriendsSearch}
@@ -128,8 +129,14 @@ const NoChatsPlaceholder = () => {
 
 const ChatsList = () => {
   const { authUser, onlineUsers } = useAuthStore();
-  const { chats, isChatsLoading, users, setSelectedUser, selectedUser } =
-    useChatStore();
+  const {
+    chats,
+    isChatsLoading,
+    users,
+    setSelectedUser,
+    selectedUser,
+    setChatMode,
+  } = useChatStore();
 
   if (isChatsLoading) {
     return <li className="p-4 text-center text-gray-500">Loading...</li>;
@@ -145,44 +152,51 @@ const ChatsList = () => {
 
   return (
     <ul className="overflow-y-auto flex-1">
-      {chats.map((chat) => {
-        const otherUserId = chat.participants.find((id) => id !== authUser._id);
-        const otherUser = users.filter((user) => user._id === otherUserId)[0];
-        const date = displayDate(chat.updatedAt);
-        const isOtherUser = otherUser?._id === authUser?._id;
+      {chats
+        .filter((chat) => chat.latestMessage !== null)
+        .map((chat) => {
+          const otherUserId = chat.participants.find(
+            (id) => id !== authUser._id
+          );
+          const otherUser = users.filter((user) => user._id === otherUserId)[0];
+          const date = displayDate(chat.updatedAt);
+          const isOtherUser = chat?.latestMessage?.senderId !== authUser._id;
 
-        return (
-          <li
-            key={`${chat.id}-${otherUserId}`}
-            className={`relative flex flex-row gap-3 items-center py-3 px-4 hover:bg-gray-800 transition-colors ${
-              otherUser?._id === selectedUser?._id ? "bg-gray-800" : ""
-            }`}
-            onClick={() => setSelectedUser(otherUser)}
-          >
-            {onlineUsers.includes(otherUser._id) && (
-              <span
-                className={`size-3 rounded-full absolute top-3 left-11 bg-green-400`}
-              ></span>
-            )}
-            <img
-              src={otherUser?.profilePic || "/avatar.png"}
-              alt={otherUser?.fullName}
-              className="size-10 rounded-full object-cover"
-            />
-            <div className="">
-              <p>{otherUser?.fullName || "Unknown User"}</p>
-              <p className="text-gray-400 text-xs">
-                {`${isOtherUser ? "" : "You: "} ${
-                  chat.latestMessage?.text || "No message"
-                }`}
-              </p>
-            </div>
-            <span className="absolute text-gray-500 text-[10px] right-2 top-3">
-              {date}
-            </span>
-          </li>
-        );
-      })}
+          return (
+            <li
+              key={`${chat.id}-${otherUserId}`}
+              className={`relative flex flex-row gap-3 items-center py-3 px-4 hover:bg-gray-800 transition-colors ${
+                otherUser?._id === selectedUser?._id ? "bg-gray-800" : ""
+              }`}
+              onClick={() => {
+                setSelectedUser(otherUser);
+                setChatMode(true);
+              }}
+            >
+              {onlineUsers.includes(otherUser._id) && (
+                <span
+                  className={`size-3 rounded-full absolute top-3 left-11 bg-green-400`}
+                ></span>
+              )}
+              <img
+                src={otherUser?.profilePic || "/avatar.png"}
+                alt={otherUser?.fullName}
+                className="size-10 rounded-full object-cover"
+              />
+              <div className="">
+                <p>{otherUser?.fullName || "Unknown User"}</p>
+                <p className="text-gray-400 text-xs">
+                  {`${isOtherUser ? "" : "You: "} ${
+                    chat.latestMessage?.text || "No message"
+                  }`}
+                </p>
+              </div>
+              <span className="absolute text-gray-500 text-[10px] right-2 top-3">
+                {date}
+              </span>
+            </li>
+          );
+        })}
     </ul>
   );
 };

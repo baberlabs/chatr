@@ -3,10 +3,15 @@ import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import { ChevronLeft } from "lucide-react";
 
-const ChatContainer = () => {
+const ChatContainer = ({ mobile }) => {
   const { selectedUser } = useChatStore();
+
   return (
-    <main className="flex flex-col h-screen w-full bg-gray-800 text-gray-100 overflow-hidden">
+    <main
+      className={`flex flex-col h-screen w-full bg-gray-800 text-gray-100 overflow-hidden ${
+        mobile ? "flex sm:hidden" : "hidden sm:flex"
+      }`}
+    >
       <Header />
       <ChatWindow />
       {selectedUser && <NewMessageForm />}
@@ -15,10 +20,13 @@ const ChatContainer = () => {
 };
 
 const Header = () => {
-  const { selectedUser } = useChatStore();
+  const { selectedUser, setChatMode } = useChatStore();
   return (
     <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-center gap-2 border-b border-gray-700">
-      <span className="md:block cursor-pointer">
+      <span
+        className="md:block cursor-pointer"
+        onClick={() => setChatMode(false)}
+      >
         <ChevronLeft />
       </span>
       <span>{selectedUser?.fullName || "Select a conversation"}</span>
