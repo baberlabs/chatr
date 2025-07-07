@@ -7,9 +7,11 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
+import { useChatStore } from "./store/useChatStore";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { chatMode } = useChatStore();
 
   useEffect(() => {
     checkAuth();
@@ -22,9 +24,11 @@ const App = () => {
       </div>
     );
   }
+
+  const dontShowNavBar = chatMode || !authUser;
   return (
     <div className="min-h-screen bg-gray-100 flex flex-row">
-      <Navbar />
+      {!dontShowNavBar && <Navbar />}
       <Routes>
         <Route
           path="/"

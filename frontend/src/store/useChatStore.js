@@ -12,6 +12,9 @@ export const useChatStore = create((set, get) => ({
   isSendingMessage: false,
   selectedUser: null,
   selectedChatId: null,
+  chatMode: false,
+
+  setChatMode: (mode) => set({ chatMode: mode }),
 
   setSelectedUser: (user) => {
     const { socket } = useAuthStore.getState();
@@ -67,7 +70,10 @@ export const useChatStore = create((set, get) => ({
       const roomId = `chat-${chatId}`;
       const { socket } = useAuthStore.getState();
       if (socket) {
-        socket.emit("joinRoom", roomId);
+        socket.emit("joinRoom", {
+          roomId,
+          receiverId,
+        });
       }
     } catch (error) {
       console.error("Error creating chat:", error);
@@ -91,9 +97,14 @@ export const useChatStore = create((set, get) => ({
       const response = await api.post(`/messages`, message);
       const newMessage = response.data.data;
       const { socket } = useAuthStore.getState();
+      const selectedUser = get().selectedUser;
       if (socket) {
         const roomId = `chat-${get().selectedChatId}`;
-        socket.emit("sendMessage", { roomId, message: newMessage });
+        socket.emit("sendMessage", {
+          roomId,
+          message: newMessage,
+          receiverId: selectedUser._id,
+        });
       }
     } catch (error) {
       console.error("Error sending message:", error);

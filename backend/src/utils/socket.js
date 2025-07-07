@@ -30,7 +30,20 @@ const setupSocket = (app) => {
       io.emit("getOnlineUsers", Object.keys(userSocketMap));
     });
 
-    socket.on("joinRoom", (roomId) => {
+    socket.on("joinRoom", ({ roomId, receiverId }) => {
+      // const receiverSocketId = userSocketMap[receiverId];
+      // console.log({
+      //   userId,
+      //   receiverId,
+      //   roomId,
+      // });
+      // if (receiverSocketId) {
+      //   io.to(receiverSocketId).emit("userJoined", {
+      //     userId,
+      //     roomId,
+      //     senderId: receiverId,
+      //   });
+      // }
       socket.join(roomId);
     });
 
@@ -39,8 +52,15 @@ const setupSocket = (app) => {
     });
 
     socket.on("sendMessage", (data) => {
-      const { roomId, message } = data;
-      io.to(roomId).emit("receiveMessage", { userId, message });
+      const { roomId, message, receiverId } = data;
+
+      const receiverSocketId = userSocketMap[receiverId];
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("receiveMessageNotification", {
+          message,
+        });
+      }
+      io.to(roomId).emit("receiveMessage", { message });
     });
   });
 

@@ -145,8 +145,24 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: userIds });
     });
 
-    socket.on("receiveMessage", (data) => {
-      const message = data.message;
+    socket.on("receiveMessageNotification", ({ message }) => {
+      const { chats } = useChatStore.getState();
+
+      const updatedChats = chats
+        .map((chat) =>
+          chat._id === message.chatId
+            ? { ...chat, latestMessage: message }
+            : chat
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.latestMessage?.createdAt) -
+            new Date(a.latestMessage?.createdAt)
+        );
+      useChatStore.setState({ chats: updatedChats });
+    });
+
+    socket.on("receiveMessage", ({ message }) => {
       const chatId = message.chatId;
       const { selectedChatId, chats } = useChatStore.getState();
 
