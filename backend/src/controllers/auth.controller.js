@@ -1,92 +1,34 @@
-import bcrypt from "bcryptjs";
-
-import { AppError } from "../utils/appError.js";
 import { generateJWT } from "../utils/generateJWT.js";
-
-import User from "../models/user.model.js";
+import {
+  createUser,
+  loginWithEmailAndPassword,
+} from "./helpers/user.helpers.js";
+import { userResponse } from "./helpers/response.helpers.js";
 
 export const registerUser = async (req, res) => {
-  const { fullName, email, password } = req.body;
+  let { fullName, email, password } = req.body;
+  fullName = fullName?.trim();
+  email = email?.trim().toLowerCase();
+  password = password?.trim();
 
-  if (!fullName) throw new AppError("Full name is required", 400);
-
-  if (!email) throw new AppError("Email is required", 400);
-
-  if (!password) throw new AppError("Password is required", 400);
-
-  const trimmedFullName = fullName.trim();
-  const trimmedEmail = email.trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(trimmedEmail)) throw new AppError("Invalid email", 400);
-
-  if (password.length < 8)
-    throw new AppError("Password should be at least 8 characters long", 400);
-
-  if (trimmedFullName.length < 3)
-    throw new AppError("Full name should be at least 3 characters long", 400);
-
-  if (trimmedFullName.length > 50)
-    throw new AppError("Full name should be less than 50 characters long", 400);
-
-  const existingUser = await User.findOne({ email: trimmedEmail });
-
-  if (existingUser) throw new AppError("Email already exists", 409);
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  const newUser = new User({
-    fullName: trimmedFullName,
-    email: trimmedEmail,
-    password: hashedPassword,
-  });
-
-  await newUser.save();
-  generateJWT(newUser._id, res);
-
-  return res.status(201).json({
+  const user = await createUser(fullName, email, password);
+  generateJWT(user._id, res);
+  res.status(201).json({
     message: "User registered successfully",
-    user: {
-      _id: newUser._id,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      profilePic: newUser.profilePic,
-      isVerified: newUser.isVerified,
-    },
+    user: userResponse(user),
   });
 };
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
+  email = email?.trim().toLowerCase();
+  password = password?.trim();
 
-  if (!email) throw new AppError("Email is required", 400);
-  if (!password) throw new AppError("Password is required", 400);
-
-  const trimmedEmail = email.trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(trimmedEmail)) throw new AppError("Invalid email", 400);
-
-  const user = await User.findOne({ email });
-
-  if (!user) throw new AppError("Invalid credentials", 401);
-
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordValid) throw new AppError("Invalid credentials", 401);
-
+  const user = await loginWithEmailAndPassword(email, password);
   generateJWT(user._id, res);
-
-  return res.status(200).json({
+  res.status(200).json({
     message: "User logged in successfully",
-    user: {
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic,
-      isVerified: user.isVerified,
-    },
+    user: userResponse(user),
   });
 };
 
@@ -97,12 +39,11 @@ export const logoutUser = (req, res) => {
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
   });
-
-  return res.status(200).json({ message: "User logged out successfully" });
+  res.status(200).json({ message: "User logged out successfully" });
 };
 
-export const checkAuthStatus = async (req, res) => {
-  return res.status(200).json({
+export const checkAuthStatus = (req, res) => {
+  res.status(200).json({
     message: "Authorised - Valid Token",
     user: req.user,
   });
