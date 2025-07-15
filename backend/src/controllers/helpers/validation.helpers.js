@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import { AppError } from "../../utils/appError.js";
 
 const validateFullName = (fullName) => {
@@ -24,4 +26,10 @@ const validatePassword = (password) => {
     throw new AppError("Password should be less than 50 characters long", 400);
 };
 
-export { validateFullName, validateEmail, validatePassword };
+const validateObjectId = (id, type) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError(`Invalid ${type} ID`, 400);
+  }
+};
+
+export { validateFullName, validateEmail, validatePassword, validateObjectId };

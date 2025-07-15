@@ -77,7 +77,7 @@ describe("Chat Routes", () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "Chats retrieved successfully",
+        message: "No chats found",
         data: [],
       });
     });

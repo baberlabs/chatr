@@ -46,10 +46,25 @@ const loginWithEmailAndPassword = async (email, password) => {
   return verifyCredentials(email, password);
 };
 
+const ensureReceiverIdIsPresent = (receiverId) => {
+  if (!receiverId) {
+    throw new AppError("Missing User ID", 400);
+  }
+};
+
+const verifyUserExists = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User Not Found", 404);
+  }
+};
+
 export {
   findUserByEmail,
   ensureEmailNotExists,
   verifyCredentials,
   createUser,
   loginWithEmailAndPassword,
+  ensureReceiverIdIsPresent,
+  verifyUserExists,
 };
