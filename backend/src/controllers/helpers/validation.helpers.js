@@ -26,10 +26,34 @@ const validatePassword = (password) => {
     throw new AppError("Password should be less than 50 characters long", 400);
 };
 
+const validateText = (text) => {
+  if (text.length > 1000) {
+    throw new AppError(
+      "Message text exceeds maximum length of 1000 characters",
+      400
+    );
+  }
+};
+
+const validateImageFormat = (image) => {
+  const imageRegex = /^data:image\/(png|jpeg|jpg);base64,/;
+  const isImageValid = imageRegex.test(image);
+  if (!isImageValid) {
+    throw new AppError("Invalid Image Format", 400);
+  }
+};
+
 const validateObjectId = (id, type) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new AppError(`Invalid ${type} ID`, 400);
   }
 };
 
-export { validateFullName, validateEmail, validatePassword, validateObjectId };
+export {
+  validateFullName,
+  validateEmail,
+  validatePassword,
+  validateObjectId,
+  validateText,
+  validateImageFormat,
+};

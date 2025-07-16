@@ -20,6 +20,12 @@ const verifyUserIsChatParticipant = (chat, userId) => {
   }
 };
 
+const ensureChatIdIsPresent = (chatId) => {
+  if (!chatId) {
+    throw new AppError("Missing Chat ID", 400);
+  }
+};
+
 const respondWithChats = (res, chats) => {
   if (chats.length === 0) {
     return res.status(200).json({
@@ -66,4 +72,5 @@ export {
   findExistingChat,
   respondWithChat,
   createNewChat,
+  ensureChatIdIsPresent,
 };

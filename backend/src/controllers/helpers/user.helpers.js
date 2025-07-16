@@ -7,6 +7,12 @@ import {
   validatePassword,
 } from "./validation.helpers.js";
 
+const ensureUserIdIsPresent = (userId) => {
+  if (!userId) {
+    throw new AppError("Missing User ID", 400);
+  }
+};
+
 const findUserByEmail = (email) => User.findOne({ email });
 
 const ensureEmailNotExists = async (email) => {
@@ -67,4 +73,5 @@ export {
   loginWithEmailAndPassword,
   ensureReceiverIdIsPresent,
   verifyUserExists,
+  ensureUserIdIsPresent,
 };

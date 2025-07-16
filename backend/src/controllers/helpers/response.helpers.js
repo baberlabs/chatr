@@ -26,4 +26,24 @@ const chatResponse = ({
   updatedAt,
 });
 
-export { userResponse, chatResponse };
+const messageResponse = ({
+  _id,
+  chatId,
+  text,
+  image,
+  senderId,
+  seen,
+  createdAt,
+  updatedAt,
+}) => ({
+  _id,
+  chatId,
+  text,
+  image,
+  senderId,
+  seen,
+  createdAt,
+  updatedAt,
+});
+
+export { userResponse, chatResponse, messageResponse };
