@@ -13,54 +13,59 @@ const setupSocket = (app) => {
 
   const userSocketMap = {};
 
-  io.on("connection", (socket) => {
-    const { userId } = socket.handshake.query;
-    console.log(
-      `Welcome ${userId}, you've connected with socket "${socket.id}"`
-    );
-
+  const addUserToSocketMap = (userId, socketId) => {
     if (userId) {
-      userSocketMap[userId] = socket.id;
+      if (!userSocketMap[userId]) {
+        userSocketMap[userId] = socketId;
+      } else {
+        delete userSocketMap[userId];
+        userSocketMap[userId] = socketId;
+      }
+    }
+  };
+
+  const removeUserFromSocketMap = (userId) => {
+    if (userId && userSocketMap[userId]) {
+      delete userSocketMap[userId];
+    }
+  };
+
+  const showOnlineUsers = (userSocketMap) => {
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  };
+
+  const sendMessage = (data, userSocketMap) => {
+    const { roomId, message, receiverId } = data;
+
+    if (receiverId && userSocketMap[receiverId]) {
+      const receiverSocketId = userSocketMap[receiverId];
+      io.to(receiverSocketId).emit("receiveMessageNotification", {
+        message,
+      });
     }
 
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    io.to(roomId).emit("receiveMessage", { message });
+  };
+
+  io.on("connection", (socket) => {
+    const { userId } = socket.handshake.query;
+
+    console.log(`User ${socket.id} has connected`);
+
+    addUserToSocketMap(userId, socket.id);
+
+    showOnlineUsers(userSocketMap);
+
+    socket.on("joinRoom", ({ roomId }) => socket.join(roomId));
+
+    socket.on("leaveRoom", (roomId) => socket.leave(roomId));
+
+    socket.on("sendMessage", (data) => sendMessage(data, userSocketMap));
+
     socket.on("disconnect", () => {
-      console.log(`User ${userId} has disconnected from socket "${socket.id}"`);
-      delete userSocketMap[userId];
-      io.emit("getOnlineUsers", Object.keys(userSocketMap));
-    });
-
-    socket.on("joinRoom", ({ roomId, receiverId }) => {
-      // const receiverSocketId = userSocketMap[receiverId];
-      // console.log({
-      //   userId,
-      //   receiverId,
-      //   roomId,
-      // });
-      // if (receiverSocketId) {
-      //   io.to(receiverSocketId).emit("userJoined", {
-      //     userId,
-      //     roomId,
-      //     senderId: receiverId,
-      //   });
-      // }
-      socket.join(roomId);
-    });
-
-    socket.on("leaveRoom", (roomId) => {
-      socket.leave(roomId);
-    });
-
-    socket.on("sendMessage", (data) => {
-      const { roomId, message, receiverId } = data;
-
-      const receiverSocketId = userSocketMap[receiverId];
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("receiveMessageNotification", {
-          message,
-        });
-      }
-      io.to(roomId).emit("receiveMessage", { message });
+      console.log(`User ${socket.id} has disconnected`);
+      removeUserFromSocketMap(userId);
+      showOnlineUsers(userSocketMap);
     });
   });
 
