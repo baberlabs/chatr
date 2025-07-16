@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import cloudinary from "../../utils/cloudinary.js";
 import { AppError } from "../../utils/appError.js";
 import User from "../../models/user.model.js";
 import {
@@ -14,6 +15,20 @@ const ensureUserIdIsPresent = (userId) => {
 };
 
 const findUserByEmail = (email) => User.findOne({ email });
+
+const findAllUsers = async (currentUserId) => {
+  return await User.find({ _id: { $ne: currentUserId } })
+    .select("fullName email profilePic isVerified")
+    .lean();
+};
+
+const findUserByUserId = async (userId) => {
+  const user = await User.findById(userId).select("-password");
+  if (!user) {
+    throw new AppError("User Not Found", 404);
+  }
+  return user;
+};
 
 const ensureEmailNotExists = async (email) => {
   if (await findUserByEmail(email))
@@ -65,6 +80,56 @@ const verifyUserExists = async (userId) => {
   }
 };
 
+const ensureUserPayloadIsNotEmpty = ({
+  fullName,
+  email,
+  password,
+  profilePic,
+}) => {
+  if (!fullName && !email && !password && !profilePic) {
+    throw new AppError("At least one field must be provided", 400);
+  }
+};
+
+const ensureUserIsAuthorisedToUpdateProfile = (currentUserId, targetUserId) => {
+  if (!currentUserId.equals(targetUserId)) {
+    throw new AppError("Permission Denied", 403);
+  }
+};
+
+const ensureUserIsAuthorisedToDeleteProfile = (currentUserId, targetUserId) => {
+  if (!currentUserId.equals(targetUserId)) {
+    throw new AppError("Permission Denied", 403);
+  }
+};
+
+const hashPassword = async (password) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+};
+
+const uploadProfilePicToCloudinary = async (profilePic) => {
+  try {
+    const uploadResult = await cloudinary.uploader.upload(profilePic, {
+      folder: "profile_pics",
+      resource_type: "image",
+    });
+    return uploadResult.secure_url;
+  } catch (error) {
+    throw new AppError("Profile picture upload failed", 500);
+  }
+};
+
+const updateUserById = async (userId, update) => {
+  return await User.findByIdAndUpdate(userId, update, {
+    new: true,
+  }).select("-password");
+};
+
+const deleteUserById = async (userId) => {
+  await User.deleteOne({ _id: userId });
+};
+
 export {
   findUserByEmail,
   ensureEmailNotExists,
@@ -74,4 +139,13 @@ export {
   ensureReceiverIdIsPresent,
   verifyUserExists,
   ensureUserIdIsPresent,
+  findAllUsers,
+  findUserByUserId,
+  ensureUserPayloadIsNotEmpty,
+  ensureUserIsAuthorisedToUpdateProfile,
+  ensureUserIsAuthorisedToDeleteProfile,
+  hashPassword,
+  uploadProfilePicToCloudinary,
+  updateUserById,
+  deleteUserById,
 };

@@ -76,7 +76,7 @@ describe("User Routes", () => {
       expect(res.body.message).toBe("Unauthorised - No Token");
     });
 
-    it("should return all users expect the requesting user", async () => {
+    it("should return all users except the requesting user", async () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
 
       expect(res.status).toBe(200);
