@@ -1,7 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
-import { ChevronDown, ChevronLeft, InfoIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  EllipsisVertical,
+  InfoIcon,
+  MenuSquare,
+  Trash2Icon,
+} from "lucide-react";
 
 const ChatContainer = ({ mobile }) => {
   const { selectedUser } = useChatStore();
@@ -65,12 +72,19 @@ const Header = () => {
 
 const ChatWindow = () => {
   const { authUser } = useAuthStore();
-  const { currentChatMessages } = useChatStore();
+  const { currentChatMessages, deleteMessage, isDeletingMessage } =
+    useChatStore();
   const messageEndRef = useRef(null);
+  const [isMenuOpen, setIsMenuOpen] = useState({});
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentChatMessages]);
+
+  const handleDeleteMessage = async (messageId) => {
+    await deleteMessage(messageId);
+    setIsMenuOpen((prev) => ({ ...prev, [messageId]: false }));
+  };
 
   return (
     <section className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -81,15 +95,47 @@ const ChatWindow = () => {
             key={msg._id}
             className={`flex ${isMe ? "justify-end" : "justify-start"}`}
           >
-            <div className="max-w-[70%] flex flex-col">
+            <div className="max-w-[70%] flex flex-col group">
               <div
-                className={`px-4 py-2 ${
+                className={`px-4 py-2 relative ${
                   isMe
                     ? "bg-blue-600 text-white self-end hover:bg-blue-700 rounded-tl-xl rounded-bl-xl rounded-tr-xl"
                     : "bg-gray-700 text-gray-100 self-start hover:bg-gray-600 rounded-tr-xl rounded-br-xl rounded-tl-xl"
                 }`}
               >
-                {msg.text}
+                <div
+                  className={`absolute h-10 justify-center items-center top-0 group-hover:flex hidden ${
+                    isMe ? "-left-5" : "-right-5"
+                  } `}
+                >
+                  {isDeletingMessage ? (
+                    <Trash2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <EllipsisVertical
+                      className="size-5 opacity-50 cursor-pointer"
+                      onClick={() =>
+                        setIsMenuOpen({
+                          ...isMenuOpen,
+                          [msg._id]: !isMenuOpen[msg._id],
+                        })
+                      }
+                    />
+                  )}
+                  {isMenuOpen[msg._id] && (
+                    <div className="absolute p-4 bg-gray-900 rounded-lg shadow-lg -left-5 top-10 z-10">
+                      {isMe && (
+                        <button
+                          className="flex items-center gap-2 text-sm text-red-300 hover:text-red-500 cursor-pointer"
+                          onClick={() => handleDeleteMessage(msg._id)}
+                        >
+                          <Trash2Icon className="size-5 cursor-pointer" />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm">{msg.text}</p>
               </div>
               <time
                 className={`text-xs text-gray-400 mt-1 ${

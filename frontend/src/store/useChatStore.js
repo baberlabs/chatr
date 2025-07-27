@@ -10,6 +10,7 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isChatsLoading: false,
   isSendingMessage: false,
+  isDeletingMessage: false,
   selectedUser: null,
   selectedChatId: null,
   chatMode: false,
@@ -110,6 +111,31 @@ export const useChatStore = create((set, get) => ({
       console.error("Error sending message:", error);
     } finally {
       set({ isSendingMessage: false });
+    }
+  },
+
+  deleteMessage: async (messageId) => {
+    set({ isDeletingMessage: true });
+    const { currentChatMessages } = get();
+    const messageToDelete = currentChatMessages.find(
+      (msg) => msg._id === messageId
+    );
+    if (!messageToDelete) {
+      console.error("Message not found:", messageId);
+      set({ isDeletingMessage: false });
+      return;
+    }
+    try {
+      await api.delete(`/messages/${messageId}`);
+      set((state) => ({
+        currentChatMessages: state.currentChatMessages.filter(
+          (msg) => msg._id !== messageId
+        ),
+      }));
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    } finally {
+      set({ isDeletingMessage: false });
     }
   },
 }));
