@@ -180,8 +180,8 @@ export const useAuthStore = create((set, get) => ({
         })
         .sort((a, b) => {
           return (
-            new Date(b.latestMessage.createdAt) -
-            new Date(a.latestMessage.createdAt)
+            new Date(b.latestMessage?.createdAt) -
+            new Date(a.latestMessage?.createdAt)
           );
         });
 
