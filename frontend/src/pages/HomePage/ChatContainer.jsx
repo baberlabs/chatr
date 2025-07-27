@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
-import { ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft, InfoIcon } from "lucide-react";
 
 const ChatContainer = ({ mobile }) => {
   const { selectedUser } = useChatStore();
@@ -21,8 +21,10 @@ const ChatContainer = ({ mobile }) => {
 
 const Header = () => {
   const { selectedUser, setChatMode, chatMode } = useChatStore();
+  const [isShowProfile, setIsShowProfile] = useState(false);
+
   return (
-    <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-center gap-2 border-b border-gray-700">
+    <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-start gap-2 border-b border-gray-700">
       {chatMode && (
         <span
           className="md:block cursor-pointer"
@@ -31,7 +33,32 @@ const Header = () => {
           <ChevronLeft />
         </span>
       )}
-      <span>{selectedUser?.fullName || "Select a conversation"}</span>
+      <span className="flex flex-col gap-1">
+        {selectedUser ? (
+          <>
+            <span
+              onClick={() => setIsShowProfile(!isShowProfile)}
+              className="underline font-bold cursor-pointer"
+            >
+              {selectedUser?.fullName}
+            </span>
+            {isShowProfile && (
+              <>
+                <span className="text-sm text-gray-400">
+                  {selectedUser?.email}
+                </span>
+                <img
+                  src={selectedUser?.profilePic || "/avatar.png"}
+                  alt="Profile"
+                  className="min-w-[300px] w-[500px] rounded-lg"
+                />
+              </>
+            )}
+          </>
+        ) : (
+          "Select a conversation"
+        )}
+      </span>
     </header>
   );
 };
