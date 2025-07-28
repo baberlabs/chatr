@@ -2,11 +2,9 @@ import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
-  ChevronDown,
   ChevronLeft,
   EllipsisVertical,
-  InfoIcon,
-  MenuSquare,
+  CrossIcon,
   Trash2Icon,
 } from "lucide-react";
 
@@ -30,43 +28,67 @@ const Header = () => {
   const { selectedUser, setChatMode, chatMode } = useChatStore();
   const [isShowProfile, setIsShowProfile] = useState(false);
 
+  if (!selectedUser) {
+    return (
+      <header className="p-4 bg-gray-800 border-b border-gray-700 flex items-center justify-center text-gray-400 text-lg font-medium">
+        Select a conversation
+      </header>
+    );
+  }
+
   return (
-    <header className="p-3.5 font-semibold bg-gray-800 text-gray-100 shadow-sm flex flex-row items-start gap-2 border-b border-gray-700">
-      {chatMode && (
-        <span
-          className="md:block cursor-pointer"
-          onClick={() => setChatMode(false)}
-        >
-          <ChevronLeft />
-        </span>
-      )}
-      <span className="flex flex-col gap-1">
-        {selectedUser ? (
-          <>
-            <span
-              onClick={() => setIsShowProfile(!isShowProfile)}
-              className="underline font-bold cursor-pointer"
+    <>
+      <header className="p-4 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {chatMode && (
+            <button
+              className="md:block cursor-pointer p-1 rounded hover:bg-gray-700 transition"
+              onClick={() => setChatMode(false)}
+              aria-label="Back"
             >
-              {selectedUser?.fullName}
-            </span>
-            {isShowProfile && (
-              <>
-                <span className="text-sm text-gray-400">
-                  {selectedUser?.email}
-                </span>
-                <img
-                  src={selectedUser?.profilePic || "/avatar.png"}
-                  alt="Profile"
-                  className="min-w-[300px] w-[500px] rounded-lg"
-                />
-              </>
-            )}
-          </>
-        ) : (
-          "Select a conversation"
-        )}
-      </span>
-    </header>
+              <ChevronLeft />
+            </button>
+          )}
+          <div className="flex items-center">
+            <img
+              src={selectedUser.profilePic || "/avatar.png"}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover mr-3 cursor-pointer"
+              onClick={() => setIsShowProfile(true)}
+            />
+            <div>
+              <p
+                onClick={() => setIsShowProfile((prev) => !prev)}
+                className="font-bold cursor-pointer hover:underline"
+                title="Show profile"
+              >
+                {selectedUser.fullName}
+              </p>
+              <p className="text-xs text-gray-400">{selectedUser.email}</p>
+            </div>
+          </div>
+        </div>
+      </header>
+      {isShowProfile && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          onClick={() => setIsShowProfile(false)}
+        >
+          <img
+            src={selectedUser.profilePic || "/avatar.png"}
+            alt="Full Profile"
+            className="max-w-full max-h-[90vh] rounded-lg shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            className="absolute top-4 right-4 text-white cursor-pointer"
+            onClick={() => setIsShowProfile(false)}
+          >
+            <CrossIcon className="size-6 rotate-45" />
+          </button>
+        </div>
+      )}
+    </>
   );
 };
 
