@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useChatStore } from "../../store/useChatStore";
-import { useAuthStore } from "../../store/useAuthStore";
+import { useChatStore } from "../../../store/useChatStore";
+import { useAuthStore } from "../../../store/useAuthStore";
 import {
   ChevronLeft,
   EllipsisVertical,

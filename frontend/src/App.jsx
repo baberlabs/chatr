@@ -1,12 +1,16 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
+
+import { Navbar } from "./components";
+import {
+  HomePage,
+  LoginPage,
+  ProfilePage,
+  RegisterPage,
+  SettingsPage,
+} from "./pages";
+
+import { useAuthStore } from "./store/useAuthStore";
 import { useChatStore } from "./store/useChatStore";
 
 const App = () => {

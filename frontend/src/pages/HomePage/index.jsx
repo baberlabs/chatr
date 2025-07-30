@@ -1,5 +1,5 @@
-import PeopleSidebar from "./PeopleSidebar";
-import ChatContainer from "./ChatContainer";
+import PeopleSidebar from "./components/PeopleSidebar";
+import ChatContainer from "./components/ChatContainer";
 import { useChatStore } from "../../store/useChatStore";
 
 const HomePage = () => {

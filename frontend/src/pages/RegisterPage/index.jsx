@@ -1,11 +1,11 @@
-import { use, useState } from "react";
-import { useAuthStore } from "../store/useAuthStore";
+import { useState } from "react";
+import { useAuthStore } from "../../store/useAuthStore";
 import { BotMessageSquare } from "lucide-react";
 
-const LoginPage = () => {
-  const { isLoggingIn, login, error, isError } = useAuthStore();
-
+const RegisterPage = () => {
+  const { register, isRegistering, error, isError } = useAuthStore();
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
   });
@@ -17,18 +17,33 @@ const LoginPage = () => {
       [name]: value,
     }));
   };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(formData);
+    register(formData);
   };
+
   return (
-    <div className="flex items-center justify-center h-screen w-full flex-col bg-gray-700 text-gray-100 ">
+    <div className="flex items-center justify-center h-screen w-full flex-col bg-gray-700 text-gray-100">
       <h1 className="text-4xl font-black flex flex-row-reverse justify-between items-center gap-2 text-blue-400/90">
         <BotMessageSquare className="size-10 animate-bounce" /> Chatr
       </h1>
-
       <form className="mt-10 w-80">
-        <h2 className="text-4xl font-bold mb-8 text-center">Welcome</h2>
+        <h2 className="text-4xl font-bold mb-8 text-center">Register</h2>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2" htmlFor="fullName">
+            Full Name
+          </label>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            className="w-full p-2 bg-gray-800 rounded"
+            placeholder="Enter your full name"
+            value={formData.fullName}
+            onChange={handleChange}
+          />
+        </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2" htmlFor="email">
             Email
@@ -63,31 +78,28 @@ const LoginPage = () => {
             Please try again.
           </div>
         )}
-        {isLoggingIn ? (
+        {isRegistering ? (
           <button
             type="submit"
             className="mt-2 w-full bg-blue-900 text-white p-2 rounded transition duration-200 cursor-progress italic font-bold"
-            disabled={isLoggingIn}
+            disabled={isRegistering}
           >
-            Logging In...
+            Registering...
           </button>
         ) : (
           <button
             type="submit"
-            className="mt-2 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 font-bold cursor-pointer transition-colors"
-            onClick={handleSubmit}
+            className="mt-2 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition duration-200 cursor-pointer font-bold"
+            onClick={(e) => handleSubmit(e)}
           >
-            Login
+            Register
           </button>
         )}
       </form>
       <p className="mt-4 text-sm text-gray-300">
-        Don't have an account?{" "}
-        <a
-          href="/register"
-          className="text-gray-100 underline hover:text-blue-400 hover:font-bold transition"
-        >
-          Register here
+        Already have an account?{" "}
+        <a href="/login" className="text-gray-100 underline">
+          Login here
         </a>
         .
       </p>
@@ -95,4 +107,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
