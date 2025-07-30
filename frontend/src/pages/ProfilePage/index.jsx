@@ -1,16 +1,7 @@
 import { useEffect, useState } from "react";
+import { BadgeAlert, Camera, Edit, LogOut, Save, Trash2 } from "lucide-react";
+
 import { useAuthStore } from "../../store/useAuthStore";
-import { Link } from "react-router-dom";
-import {
-  BadgeAlert,
-  Camera,
-  Delete,
-  Edit,
-  LogOut,
-  LucideDelete,
-  Save,
-  Trash2,
-} from "lucide-react";
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile, logout, deleteAccount } =

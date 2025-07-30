@@ -1,8 +1,9 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { User } from "lucide-react";
+
+import { displayDate } from "../../../lib/displayDate";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { useChatStore } from "../../../store/useChatStore";
-import { User } from "lucide-react";
-import { displayDate } from "../../../lib/displayDate";
 
 const PeopleSidebar = () => {
   const { users, isChatsLoading, getAllUsers, getAllChats, chats } =

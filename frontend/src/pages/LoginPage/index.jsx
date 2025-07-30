@@ -1,6 +1,7 @@
-import { use, useState } from "react";
-import { useAuthStore } from "../../store/useAuthStore";
+import { useState } from "react";
 import { BotMessageSquare } from "lucide-react";
+
+import { useAuthStore } from "../../store/useAuthStore";
 
 const LoginPage = () => {
   const { isLoggingIn, login, error, isError } = useAuthStore();

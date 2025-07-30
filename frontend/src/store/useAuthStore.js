@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { api } from "../lib/api";
 import { io } from "socket.io-client";
+
+import { api } from "../lib/api";
 import { useChatStore } from "./useChatStore";
 
 const SOCKET_URL =

@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import { Navbar } from "./components";
 import {
@@ -9,7 +9,6 @@ import {
   RegisterPage,
   SettingsPage,
 } from "./pages";
-
 import { useAuthStore } from "./store/useAuthStore";
 import { useChatStore } from "./store/useChatStore";
 

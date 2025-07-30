@@ -1,7 +1,7 @@
 import { create } from "zustand";
+
 import { api } from "../lib/api";
 import { useAuthStore } from "./useAuthStore";
-import { io } from "socket.io-client";
 
 export const useChatStore = create((set, get) => ({
   users: [],

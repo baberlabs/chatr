@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useAuthStore } from "../../store/useAuthStore";
 import { BotMessageSquare } from "lucide-react";
+
+import { useAuthStore } from "../../store/useAuthStore";
 
 const RegisterPage = () => {
   const { register, isRegistering, error, isError } = useAuthStore();

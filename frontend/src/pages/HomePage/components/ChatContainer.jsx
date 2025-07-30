@@ -1,6 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { useChatStore } from "../../../store/useChatStore";
-import { useAuthStore } from "../../../store/useAuthStore";
 import {
   ChevronLeft,
   EllipsisVertical,
@@ -8,6 +6,9 @@ import {
   Trash2Icon,
   MenuSquare,
 } from "lucide-react";
+
+import { useChatStore } from "../../../store/useChatStore";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 const ChatContainer = ({ mobile }) => {
   const { selectedUser } = useChatStore();
