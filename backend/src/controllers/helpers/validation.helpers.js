@@ -36,7 +36,8 @@ const validateText = (text) => {
 };
 
 const validateImageFormat = (image) => {
-  const imageRegex = /^data:image\/(png|jpeg|jpg);base64,/;
+  const imageRegex =
+    /^data:image\/(png|jpeg|jpg|webp|gif|bmp|x-icon|ico|avif);base64,/;
   const isImageValid = imageRegex.test(image);
   if (!isImageValid) {
     throw new AppError("Invalid Image Format", 400);
