@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 
 import UserAvatar from "./UserAvatar";
 import UserProfileModal from "./UserProfileModal";
 import { useChatStore } from "../../../store/useChatStore";
+import { useProfilePic } from "../hooks/useProfilePic";
 
 const ChatHeader = () => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { selectedUser, setChatMode, chatMode } = useChatStore();
+  const { toggleProfile } = useProfilePic();
 
   if (!selectedUser) {
     return (
@@ -18,8 +18,6 @@ const ChatHeader = () => {
   }
 
   const handleBack = () => setChatMode(false);
-  const toggleProfile = () => setIsProfileOpen((prev) => !prev);
-  const closeProfile = () => setIsProfileOpen(false);
 
   return (
     <header className="p-4 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
@@ -34,11 +32,7 @@ const ChatHeader = () => {
             <ChevronLeft />
           </button>
         )}
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={toggleProfile}
-          title="View full profile"
-        >
+        <div className="flex items-center gap-2">
           <UserAvatar user={selectedUser} />
           <div>
             <p className="font-bold hover:underline">{selectedUser.fullName}</p>
@@ -46,9 +40,6 @@ const ChatHeader = () => {
           </div>
         </div>
       </div>
-      {isProfileOpen && (
-        <UserProfileModal user={selectedUser} onClose={closeProfile} />
-      )}
     </header>
   );
 };

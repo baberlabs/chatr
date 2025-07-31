@@ -1,8 +1,8 @@
-import ChatsListItem from "./ChatsListItem";
+import ChatListItem from "./ChatListItem";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { useChatStore } from "../../../store/useChatStore";
 
-const ChatsList = () => {
+const ChatList = () => {
   const { authUser } = useAuthStore();
   const { chats, isChatsLoading, users, setSelectedUser, setChatMode } =
     useChatStore();
@@ -38,7 +38,7 @@ const ChatsList = () => {
           const isOtherUser = chat.latestMessage?.senderId !== authUser._id;
 
           return (
-            <ChatsListItem
+            <ChatListItem
               key={chat._id}
               chat={chat}
               otherUser={otherUser}
@@ -51,4 +51,4 @@ const ChatsList = () => {
   );
 };
 
-export default ChatsList;
+export default ChatList;
