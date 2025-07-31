@@ -1,44 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 
 import Alert from "./Alert";
 import MessageBubble from "./MessageBubble";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { useChatStore } from "../../../store/useChatStore";
-import useScrollToBottom from "../hooks/useScrollToBottom";
+import { useMenu } from "../hooks/useMenu";
+import { useScrollToBottom } from "../hooks/useScrollToBottom";
 
 const ChatWindow = () => {
   const { authUser } = useAuthStore();
-  const { currentChatMessages, deleteMessage, isDeletingMessage } =
-    useChatStore();
+  const { currentChatMessages } = useChatStore();
+  const {
+    alert,
+    openMenuId,
+    setOpenMenuId,
+    handleDeleteMessage,
+    handleCopyMessage,
+  } = useMenu();
   const messageEndRef = useScrollToBottom(currentChatMessages);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [alert, setAlert] = useState(null);
-
-  useEffect(() => {
-    if (!openMenuId) return;
-    const handleClick = () => setOpenMenuId(null);
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [openMenuId]);
-
-  const handleDeleteMessage = useCallback(
-    async (messageId) => {
-      await deleteMessage(messageId);
-      setOpenMenuId(null);
-    },
-    [deleteMessage]
+  const messageHandlers = useMemo(
+    () => ({
+      openMenuId,
+      setOpenMenuId,
+      handleDeleteMessage,
+      handleCopyMessage,
+    }),
+    [openMenuId, setOpenMenuId, handleDeleteMessage, handleCopyMessage]
   );
-
-  const handleCopyMessage = useCallback(async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setAlert({ type: "success", message: "Message copied" });
-    } catch {
-      setAlert({ type: "error", message: "Copy failed" });
-    }
-    setTimeout(() => setAlert(null), 1800);
-    setOpenMenuId(null);
-  }, []);
 
   if (!currentChatMessages || currentChatMessages.length === 0) {
     return (
@@ -57,12 +45,8 @@ const ChatWindow = () => {
           <MessageBubble
             key={msg._id}
             isMe={isMe}
-            setOpenMenuId={setOpenMenuId}
-            openMenuId={openMenuId}
-            isDeletingMessage={isDeletingMessage}
-            handleCopyMessage={handleCopyMessage}
-            handleDeleteMessage={handleDeleteMessage}
             msg={msg}
+            messageHandlers={messageHandlers}
           />
         );
       })}

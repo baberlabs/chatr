@@ -10,4 +10,4 @@ function useScrollToBottom(dependency) {
   return ref;
 }
 
-export default useScrollToBottom;
+export { useScrollToBottom };
