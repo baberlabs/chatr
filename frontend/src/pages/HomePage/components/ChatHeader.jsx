@@ -7,7 +7,7 @@ import { useProfilePic } from "../hooks/useProfilePic";
 
 const ChatHeader = () => {
   const { selectedUser, setChatMode, chatMode } = useChatStore();
-  const { isProfileOpen, toggleProfile, closeProfile } = useProfilePic();
+  const { toggleProfile } = useProfilePic();
 
   if (!selectedUser) {
     return (
@@ -32,11 +32,7 @@ const ChatHeader = () => {
             <ChevronLeft />
           </button>
         )}
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={toggleProfile}
-          title="View full profile"
-        >
+        <div className="flex items-center gap-2">
           <UserAvatar user={selectedUser} />
           <div>
             <p className="font-bold hover:underline">{selectedUser.fullName}</p>
@@ -44,9 +40,6 @@ const ChatHeader = () => {
           </div>
         </div>
       </div>
-      {isProfileOpen && (
-        <UserProfileModal user={selectedUser} onClose={closeProfile} />
-      )}
     </header>
   );
 };

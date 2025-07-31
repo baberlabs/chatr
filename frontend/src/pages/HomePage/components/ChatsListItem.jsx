@@ -23,9 +23,11 @@ const ChatsListItem = ({ chat, otherUser, isOtherUser, onClick }) => {
     >
       {isOnline && <OnlineStatusDisplay />}
 
-      <UserAvatar user={otherUser} />
+      <div onClick={(e) => e.stopPropagation()}>
+        <UserAvatar user={otherUser} />
+      </div>
 
-      <div>
+      <div className="flex-1">
         <p>{otherUser?.fullName || "Unknown User"}</p>
         <p className="text-gray-400 text-xs">{`${prefix} ${messageText}`}</p>
       </div>
