@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+
 import registerRoutes from "./routes/index.js";
 import { globalErrorHandler } from "./utils/globalErrorHandler.js";
 

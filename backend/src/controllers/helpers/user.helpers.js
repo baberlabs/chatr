@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import cloudinary from "../../utils/cloudinary.js";
+
 import { AppError } from "../../utils/appError.js";
 import User from "../../models/user.model.js";
 import {
@@ -18,7 +19,7 @@ const findUserByEmail = (email) => User.findOne({ email });
 
 const findAllUsers = async (currentUserId) => {
   return await User.find({ _id: { $ne: currentUserId } })
-    .select("fullName email profilePic isVerified")
+    .select("fullName email profilePic isVerified createdAt updatedAt")
     .lean();
 };
 

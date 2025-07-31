@@ -1,9 +1,19 @@
-const userResponse = ({ _id, fullName, email, profilePic, isVerified }) => ({
+const userResponse = ({
   _id,
   fullName,
   email,
   profilePic,
   isVerified,
+  createdAt,
+  updatedAt,
+}) => ({
+  _id,
+  fullName,
+  email,
+  profilePic,
+  isVerified,
+  createdAt,
+  updatedAt,
 });
 
 const chatResponse = ({
