@@ -1,6 +1,7 @@
+import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
+
 import ChatListItem from "./ChatListItem";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { useChatStore } from "../../../store/useChatStore";
 
 const ChatList = () => {
   const { authUser } = useAuthStore();

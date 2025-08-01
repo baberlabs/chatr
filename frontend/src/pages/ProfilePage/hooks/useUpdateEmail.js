@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useAuthStore } from "../../../store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const useUpdateEmail = () => {
   const { authUser, updateProfile } = useAuthStore();

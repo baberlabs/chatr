@@ -1,6 +1,6 @@
 import { User } from "lucide-react";
 
-import { useAuthStore } from "../../../store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const PeopleHeader = ({ setNewFriendsSearch, newFriendsSearch }) => {
   const { onlineUsers } = useAuthStore();

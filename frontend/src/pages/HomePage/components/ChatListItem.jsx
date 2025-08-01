@@ -1,8 +1,9 @@
-import { displayDate } from "../../../lib/displayDate";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { useChatStore } from "../../../store/useChatStore";
-import OnlineStatusDisplay from "./OnlineStatusDisplay";
+import { displayDate } from "@/lib/displayDate";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
+
 import UserAvatar from "./UserAvatar";
+import OnlineStatusDisplay from "./OnlineStatusDisplay";
 
 const ChatListItem = ({ chat, otherUser, isOtherUser, onClick }) => {
   const { onlineUsers } = useAuthStore();

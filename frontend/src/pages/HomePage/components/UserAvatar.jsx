@@ -1,5 +1,5 @@
-import { useProfilePic } from "../hooks/useProfilePic";
 import UserProfileModal from "./UserProfileModal";
+import { useProfilePic } from "../hooks/useProfilePic";
 
 const UserAvatar = ({ user }) => {
   const { profilePic, fullName } = user;

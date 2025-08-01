@@ -1,8 +1,8 @@
 import { ChevronLeft } from "lucide-react";
 
+import { useChatStore } from "@/store/useChatStore";
+
 import UserAvatar from "./UserAvatar";
-import UserProfileModal from "./UserProfileModal";
-import { useChatStore } from "../../../store/useChatStore";
 import { useProfilePic } from "../hooks/useProfilePic";
 
 const ChatHeader = () => {

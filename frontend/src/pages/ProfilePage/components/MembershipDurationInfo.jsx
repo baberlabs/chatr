@@ -1,4 +1,5 @@
-import { useAuthStore } from "../../../store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
+
 import { formatTimeAgo } from "../functions/formatTimeAgo";
 
 const MembershipDurationInfo = () => {

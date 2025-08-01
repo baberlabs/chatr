@@ -1,4 +1,4 @@
-import { useAuthStore } from "../../../store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const useDeleteAccount = () => {
   const { authUser, deleteAccount } = useAuthStore();

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 
+import { useChatStore } from "@/store/useChatStore";
+
 import PeopleHeader from "./PeopleHeader";
 import FriendSearchResults from "./FriendSearchResults";
 import ChatsLoadingPlaceholder from "./ChatsLoadingPlaceholder";
 import NoChatsPlaceholder from "./NoChatsPlaceholder";
 import ChatsList from "./ChatsList";
-import { useChatStore } from "../../../store/useChatStore";
 
 const PeopleSidebar = () => {
   const { users, isChatsLoading, getAllUsers, getAllChats } = useChatStore();

@@ -1,12 +1,7 @@
-import { BadgeAlert, Camera, LogOut, Trash2 } from "lucide-react";
-
 import ProfilePictureField from "./components/ProfilePictureField";
 import FullNameField from "./components/FullNameField";
 import EmailField from "./components/EmailField";
 import PasswordField from "./components/PasswordField";
-
-import { useAuthStore } from "../../store/useAuthStore";
-import { useDeleteAccount } from "./hooks/useDeleteAccount";
 import MembershipDurationInfo from "./components/MembershipDurationInfo";
 import VerificationStatus from "./components/VerificationStatus";
 import LogoutButton from "./components/LogoutButton";

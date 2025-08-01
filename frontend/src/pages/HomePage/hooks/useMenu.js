@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useChatStore } from "../../../store/useChatStore";
+
+import { useChatStore } from "@/store/useChatStore";
 
 const useMenu = () => {
   const { deleteMessage } = useChatStore();

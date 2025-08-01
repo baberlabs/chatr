@@ -1,9 +1,10 @@
 import { EllipsisVertical, Trash2Icon } from "lucide-react";
 
+import { useChatStore } from "@/store/useChatStore";
+
 import MessageText from "./MessageText";
 import MessageTimestamp from "./MessageTimestamp";
 import MessageMenu from "./MessageMenu";
-import { useChatStore } from "../../../store/useChatStore";
 
 function MessageBubble({ isMe, msg, messageHandlers }) {
   const { isDeletingMessage } = useChatStore();

@@ -1,6 +1,7 @@
+import { useChatStore } from "@/store/useChatStore";
+
 import PeopleSidebar from "./components/PeopleSidebar";
 import ChatContainer from "./components/ChatContainer";
-import { useChatStore } from "../../store/useChatStore";
 
 const HomePage = () => {
   const { chatMode } = useChatStore();

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { io } from "socket.io-client";
 
-import { api } from "../lib/api";
-import { useChatStore } from "./useChatStore";
+import { api } from "@/lib/api";
+import { useChatStore } from "@/store/useChatStore";
 
 const SOCKET_URL =
   import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";

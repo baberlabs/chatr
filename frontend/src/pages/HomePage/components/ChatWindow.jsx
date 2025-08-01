@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 
+import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
+
 import Alert from "./Alert";
 import MessageBubble from "./MessageBubble";
-import { useAuthStore } from "../../../store/useAuthStore";
-import { useChatStore } from "../../../store/useChatStore";
 import { useMenu } from "../hooks/useMenu";
 import { useScrollToBottom } from "../hooks/useScrollToBottom";
 

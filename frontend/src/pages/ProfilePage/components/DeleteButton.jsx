@@ -1,4 +1,5 @@
 import { Trash2 } from "lucide-react";
+
 import { useDeleteAccount } from "../hooks/useDeleteAccount";
 
 const DeleteButton = () => {

@@ -1,5 +1,6 @@
 import { BadgeAlert } from "lucide-react";
-import { useAuthStore } from "../../../store/useAuthStore";
+
+import { useAuthStore } from "@/store/useAuthStore";
 
 const VerificationStatus = () => {
   const { authUser } = useAuthStore();

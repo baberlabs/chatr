@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import { Navbar } from "./components";
+import { Navbar } from "@/components";
 import {
   HomePage,
   LoginPage,
   ProfilePage,
   RegisterPage,
   SettingsPage,
-} from "./pages";
-import { useAuthStore } from "./store/useAuthStore";
-import { useChatStore } from "./store/useChatStore";
+} from "@/pages";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useChatStore } from "@/store/useChatStore";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();

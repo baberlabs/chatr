@@ -1,7 +1,8 @@
+import { useChatStore } from "@/store/useChatStore";
+
 import ChatHeader from "./ChatHeader";
 import ChatWindow from "./ChatWindow";
 import NewMessageForm from "./NewMessageForm";
-import { useChatStore } from "../../../store/useChatStore";
 
 const ChatContainer = ({ mobile }) => {
   const { selectedUser } = useChatStore();
