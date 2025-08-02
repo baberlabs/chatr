@@ -2,14 +2,13 @@ import UserProfileModal from "./UserProfileModal";
 import { useProfilePic } from "../hooks/useProfilePic";
 
 const UserAvatar = ({ user }) => {
-  const { profilePic, fullName } = user;
   const { isProfileOpen, toggleProfile, closeProfile } = useProfilePic();
 
   return (
     <>
       <img
-        src={profilePic || "/avatar.png"}
-        alt={`${fullName}'s profile picture`}
+        src={user?.profilePic || "/avatar.png"}
+        alt={`${user?.fullName}'s profile picture`}
         className="size-10 rounded-full object-cover cursor-pointer"
         onClick={toggleProfile}
       />
