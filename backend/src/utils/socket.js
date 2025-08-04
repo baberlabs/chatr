@@ -62,6 +62,14 @@ const setupSocket = (app) => {
 
     socket.on("sendMessage", (data) => sendMessage(data, userSocketMap));
 
+    socket.on("startTypingIndicator", ({ roomId, length }) => {
+      socket.to(roomId).emit("startTypingIndicator", { length });
+    });
+
+    socket.on("stopTypingIndicator", ({ roomId }) => {
+      socket.to(roomId).emit("stopTypingIndicator");
+    });
+
     socket.on("disconnect", () => {
       console.log(`User ${socket.id} has disconnected`);
       removeUserFromSocketMap(userId);

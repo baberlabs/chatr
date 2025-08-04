@@ -139,11 +139,22 @@ export const useAuthStore = create((set, get) => ({
     const socket = io(SOCKET_URL, {
       query: { userId: authUser._id },
     });
+
     socket.connect();
     set({ socket });
 
     socket.on("getOnlineUsers", (userIds) => {
+      const { selectedUser, setGhostTypingIndicatorLength } =
+        useChatStore.getState();
+      const prevOnlineUsers = get().onlineUsers;
       set({ onlineUsers: userIds });
+
+      const wasUserOnline = prevOnlineUsers.includes(selectedUser?._id);
+      const isUserOnline = userIds.includes(selectedUser?._id);
+
+      if (selectedUser && wasUserOnline && !isUserOnline) {
+        setGhostTypingIndicatorLength(0);
+      }
     });
 
     socket.on("receiveMessageNotification", ({ message }) => {
@@ -187,6 +198,16 @@ export const useAuthStore = create((set, get) => ({
         });
 
       useChatStore.setState({ chats: updatedChats });
+    });
+
+    socket.on("startTypingIndicator", ({ length }) => {
+      const { setGhostTypingIndicatorLength } = useChatStore.getState();
+      setGhostTypingIndicatorLength(length);
+    });
+
+    socket.on("stopTypingIndicator", () => {
+      const { setGhostTypingIndicatorLength } = useChatStore.getState();
+      setGhostTypingIndicatorLength(0);
     });
   },
 

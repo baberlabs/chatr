@@ -1,11 +1,27 @@
-import { useState } from "react";
-
 import { useChatStore } from "@/store/useChatStore";
+import { useEffect } from "react";
 
 const NewMessageForm = () => {
-  const { sendMessage, isSendingMessage, selectedUser, selectedChatId } =
-    useChatStore();
-  const [currentMessage, setCurrentMessage] = useState({});
+  const {
+    sendMessage,
+    isSendingMessage,
+    currentMessage,
+    setCurrentMessage,
+    selectedUser,
+    selectedChatId,
+    showGhostTypingIndicator,
+  } = useChatStore();
+
+  useEffect(() => {
+    const trueLength = currentMessage.text?.trim().length;
+    showGhostTypingIndicator(trueLength);
+  }, [currentMessage.text]);
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setCurrentMessage({ ...currentMessage, text: value });
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!currentMessage.text || !selectedUser) return;
@@ -19,9 +35,7 @@ const NewMessageForm = () => {
         type="text"
         placeholder="Type a message..."
         value={currentMessage.text || ""}
-        onChange={(e) =>
-          setCurrentMessage({ ...currentMessage, text: e.target.value })
-        }
+        onChange={handleInputChange}
         className="flex-1 rounded-lg px-3 py-2 text-sm outline-none bg-gray-700 text-gray-100 placeholder-gray-400"
       />
       <button

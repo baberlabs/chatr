@@ -13,7 +13,29 @@ export const useChatStore = create((set, get) => ({
   isDeletingMessage: false,
   selectedUser: null,
   selectedChatId: null,
+  currentMessage: "",
   chatMode: false,
+  ghostTypingIndicatorLength: 0,
+
+  setCurrentMessage: (message) => set({ currentMessage: message }),
+
+  setGhostTypingIndicatorLength: (length) =>
+    set({ ghostTypingIndicatorLength: length }),
+
+  showGhostTypingIndicator: (length) => {
+    const { socket } = useAuthStore.getState();
+    const { selectedChatId } = get();
+
+    const roomId = `chat-${selectedChatId}`;
+
+    if (!selectedChatId || !socket) return;
+
+    if (length > 0) {
+      socket.emit("startTypingIndicator", { roomId, length });
+    } else {
+      socket.emit("stopTypingIndicator", { roomId });
+    }
+  },
 
   setChatMode: (mode) => set({ chatMode: mode }),
 
@@ -34,6 +56,7 @@ export const useChatStore = create((set, get) => ({
     set({ selectedUser: user });
     get().createChat(user._id);
   },
+
   setSelectedChatId: (chatId) => set({ selectedChatId: chatId }),
 
   getAllUsers: async () => {
@@ -95,6 +118,7 @@ export const useChatStore = create((set, get) => ({
   sendMessage: async (message) => {
     set({ isSendingMessage: true });
     try {
+      if (message.text.trim() === "") return;
       const response = await api.post(`/messages`, message);
       const newMessage = response.data.data;
       const { socket } = useAuthStore.getState();
