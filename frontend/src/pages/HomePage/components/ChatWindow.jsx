@@ -7,10 +7,11 @@ import Alert from "./Alert";
 import MessageBubble from "./MessageBubble";
 import { useMenu } from "../hooks/useMenu";
 import { useScrollToBottom } from "../hooks/useScrollToBottom";
+import GhostMessageBubble from "./GhostMessageBubble";
 
 const ChatWindow = () => {
   const { authUser } = useAuthStore();
-  const { currentChatMessages } = useChatStore();
+  const { currentChatMessages, ghostTypingIndicatorLength } = useChatStore();
   const {
     alert,
     openMenuId,
@@ -51,6 +52,7 @@ const ChatWindow = () => {
           />
         );
       })}
+      <GhostMessageBubble length={ghostTypingIndicatorLength} />
       <div ref={messageEndRef} />
     </section>
   );
