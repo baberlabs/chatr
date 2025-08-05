@@ -11,7 +11,6 @@ export const useAuthStore = create((set, get) => ({
   authUser: null,
   isCheckingAuth: true,
   isRegistering: false,
-  isLoggingIn: false,
   isLoggingOut: false,
   isUpdatingProfile: false,
   socket: null,
@@ -65,7 +64,6 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async (credentials) => {
-    set({ isLoggingIn: true });
     get().resetErrors();
     try {
       const response = await api.post("/auth/login", credentials);
@@ -83,8 +81,6 @@ export const useAuthStore = create((set, get) => ({
           error: null,
         });
       }, 10000);
-    } finally {
-      set({ isLoggingIn: false });
     }
   },
 
