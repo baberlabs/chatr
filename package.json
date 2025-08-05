@@ -1,21 +1,21 @@
 {
-  "name": "chat-app",
+  "name": "chatr",
   "version": "1.0.0",
   "description": "A real-time chat application made with React, Tailwind CSS v4, Node, Express v5, and MongoDB",
-  "main": "index.js",
+  "main": "backend/server.js",
   "scripts": {
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
-    "start": "npm run start --prefix backend"
+    "start": "NODE_ENV=production npm run start --prefix backend"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baberlabs/chat-app.git"
+    "url": "git+https://github.com/baberlabs/chatr.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/baberlabs/chat-app/issues"
+    "url": "https://github.com/baberlabs/chatr/issues"
   },
-  "homepage": "https://github.com/baberlabs/chat-app#readme"
+  "homepage": "https://github.com/baberlabs/chatr#readme"
 }
