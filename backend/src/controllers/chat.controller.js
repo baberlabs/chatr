@@ -30,9 +30,10 @@ export const createChat = async (req, res) => {
   const existingChat = await findExistingChat(senderId, receiverId);
   if (existingChat) {
     respondWithChat(res, existingChat, "Chat already exists", 200);
+    return;
   }
   const newChat = await createNewChat(senderId, receiverId);
-  await respondWithChat(res, newChat, "Chat created successfully", 201);
+  respondWithChat(res, newChat, "Chat created successfully", 201);
 };
 
 export const getChatById = async (req, res) => {
