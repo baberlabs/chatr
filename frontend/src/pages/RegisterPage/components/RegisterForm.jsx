@@ -2,13 +2,14 @@ import InputField from "@/components/InputField";
 import SubmitButton from "./SubmitButton";
 import { useAuthStore } from "@/store/useAuthStore";
 
-const LoginForm = () => {
-  const { login, error, isError } = useAuthStore();
+const RegisterForm = () => {
+  const { register, error, isError } = useAuthStore();
 
-  const handleLogin = async (formData) => {
+  const handleRegister = async (formData) => {
+    const fullName = formData.get("fullName");
     const email = formData.get("email");
     const password = formData.get("password");
-    await login({ email, password });
+    await register({ fullName, email, password });
   };
 
   const handleKeyDown = (event) => {
@@ -19,7 +20,18 @@ const LoginForm = () => {
   };
 
   return (
-    <form className="space-y-4" action={handleLogin} onKeyDown={handleKeyDown}>
+    <form
+      className="space-y-4"
+      action={handleRegister}
+      onKeyDown={handleKeyDown}
+    >
+      <InputField
+        label="Full Name"
+        type="text"
+        name="fullName"
+        placeholder="Enter your full name"
+        required
+      />
       <InputField
         label="Email"
         type="email"
@@ -46,4 +58,4 @@ const LoginForm = () => {
   );
 };
 
-export default LoginForm;
+export default RegisterForm;
