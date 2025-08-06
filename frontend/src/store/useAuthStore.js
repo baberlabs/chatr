@@ -113,7 +113,12 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: response.data.user });
       return response.data.user;
     } catch (error) {
+      set({ error: error.response?.data?.message || "Profile update failed" });
+      setTimeout(() => {
+        set({ error: null });
+      }, 5000);
       console.error("Profile update error:", error);
+      throw error;
     } finally {
       set({ isUpdatingProfile: false });
     }

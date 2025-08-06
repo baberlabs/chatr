@@ -17,7 +17,6 @@ const useUpdateProfilePic = () => {
         profilePic: base64Image,
       });
       setProfilePic(updatedProfile.profilePic);
-      alert("Profile picture updated successfully!");
     };
   };
 
