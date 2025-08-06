@@ -205,6 +205,15 @@ export const useAuthStore = create((set, get) => ({
       const { setGhostTypingIndicatorLength } = useChatStore.getState();
       setGhostTypingIndicatorLength(0);
     });
+
+    socket.on("deleteMessage", ({ messageId }) => {
+      if (!messageId) return;
+      useChatStore.setState((state) => ({
+        currentChatMessages: state.currentChatMessages.filter(
+          (msg) => msg._id !== messageId
+        ),
+      }));
+    });
   },
 
   disconnectSocket: () => {

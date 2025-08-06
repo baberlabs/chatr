@@ -156,6 +156,11 @@ export const useChatStore = create((set, get) => ({
           (msg) => msg._id !== messageId
         ),
       }));
+      const { socket } = useAuthStore.getState();
+      const roomId = `chat-${get().selectedChatId}`;
+      if (socket) {
+        socket.emit("deleteMessage", { roomId, messageId });
+      }
     } catch (error) {
       console.error("Error deleting message:", error);
     } finally {
