@@ -44,6 +44,14 @@ const validateImageFormat = (image) => {
   }
 };
 
+const validateImageSize = (image) => {
+  const base64Size = Buffer.byteLength(image, "base64");
+  const maxSize = 5 * 1024 * 1024; // 5 MB
+  if (base64Size > maxSize) {
+    throw new AppError("Image size exceeds 5 MB", 400);
+  }
+};
+
 const validateObjectId = (id, type) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new AppError(`Invalid ${type} ID`, 400);
@@ -57,4 +65,5 @@ export {
   validateObjectId,
   validateText,
   validateImageFormat,
+  validateImageSize,
 };

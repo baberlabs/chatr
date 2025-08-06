@@ -15,6 +15,7 @@ import {
   validateEmail,
   validateFullName,
   validateImageFormat,
+  validateImageSize,
   validateObjectId,
   validatePassword,
 } from "./helpers/validation.helpers.js";
@@ -66,6 +67,7 @@ export const updateUserProfile = async (req, res) => {
   }
   if (profilePic) {
     validateImageFormat(profilePic);
+    validateImageSize(profilePic);
     update.profilePic = await uploadProfilePicToCloudinary(profilePic);
   }
   const updatedUser = await updateUserById(targetUserId, update);

@@ -8,7 +8,6 @@ const useUpdateProfilePic = () => {
 
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
-    console.log("Selected file:", file);
     if (!file) return;
     const reader = new FileReader();
     reader.readAsDataURL(file);
