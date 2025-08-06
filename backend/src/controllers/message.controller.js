@@ -75,6 +75,18 @@ export const deleteMessage = async (req, res) => {
   const message = await findMessageByMessageId(messageId);
   ensureUserIsAuthorisedToDeleteMessage(message, userId);
   await deleteMessageByMessageId(messageId);
+  const chatId = message.chatId;
+  const remainingMessages = await findMessagesByChatId(chatId);
+  if (remainingMessages.length > 0) {
+    const latestMessage = remainingMessages.reduce((latest, current) => {
+      return new Date(current.createdAt) > new Date(latest.createdAt)
+        ? current
+        : latest;
+    });
+    await updateChatWithLatestMessage(chatId, latestMessage);
+  } else {
+    await updateChatWithLatestMessage(chatId, null);
+  }
   res.status(200).json({
     message: "Message deleted successfully",
     data: messageResponse(message),
