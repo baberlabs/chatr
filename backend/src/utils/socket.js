@@ -70,6 +70,10 @@ const setupSocket = (app) => {
       socket.to(roomId).emit("stopTypingIndicator");
     });
 
+    socket.on("deleteMessage", ({ roomId, messageId }) => {
+      socket.to(roomId).emit("deleteMessage", { messageId });
+    });
+
     socket.on("disconnect", () => {
       console.log(`User ${socket.id} has disconnected`);
       removeUserFromSocketMap(userId);
