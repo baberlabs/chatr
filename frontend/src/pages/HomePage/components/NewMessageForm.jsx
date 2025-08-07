@@ -1,16 +1,15 @@
 import { useChatStore } from "@/store/useChatStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const NewMessageForm = () => {
   const {
     sendMessage,
     isSendingMessage,
-    currentMessage,
-    setCurrentMessage,
     selectedUser,
     selectedChatId,
     showGhostTypingIndicator,
   } = useChatStore();
+  const [currentMessage, setCurrentMessage] = useState({ text: "" });
 
   useEffect(() => {
     const trueLength = currentMessage.text?.trim().length;

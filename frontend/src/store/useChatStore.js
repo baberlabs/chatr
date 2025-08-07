@@ -13,11 +13,8 @@ export const useChatStore = create((set, get) => ({
   isDeletingMessage: false,
   selectedUser: null,
   selectedChatId: null,
-  currentMessage: "",
   chatMode: false,
   ghostTypingIndicatorLength: 0,
-
-  setCurrentMessage: (message) => set({ currentMessage: message }),
 
   setGhostTypingIndicatorLength: (length) =>
     set({ ghostTypingIndicatorLength: length }),
