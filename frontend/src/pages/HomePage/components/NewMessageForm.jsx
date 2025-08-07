@@ -1,54 +1,59 @@
+import { useEffect, useState } from "react";
+
+import SendButton from "./SendButton";
+import SelectImageButton from "./SelectImageButton";
+import NewMessageInputField from "./NewMessageInputField";
+import NewMessageImagePreview from "./NewMessageImagePreview";
+import { imageFileToBase64 } from "@/lib/imageFileToBase64";
 import { useChatStore } from "@/store/useChatStore";
-import { useEffect } from "react";
 
 const NewMessageForm = () => {
-  const {
-    sendMessage,
-    isSendingMessage,
-    currentMessage,
-    setCurrentMessage,
-    selectedUser,
-    selectedChatId,
-    showGhostTypingIndicator,
-  } = useChatStore();
+  const { sendMessage, selectedChatId, showGhostTypingIndicator } =
+    useChatStore();
+  const [textLength, setTextLength] = useState(0);
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
-    const trueLength = currentMessage.text?.trim().length;
-    showGhostTypingIndicator(trueLength);
-  }, [currentMessage.text]);
+    showGhostTypingIndicator(textLength);
+  }, [textLength]);
 
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setCurrentMessage({ ...currentMessage, text: value });
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    const base64Image = await imageFileToBase64(file);
+    setImage(base64Image);
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!currentMessage.text || !selectedUser) return;
-    await sendMessage({ text: currentMessage.text, chatId: selectedChatId });
-    setCurrentMessage({});
+  const handleSendMessage = async (formData) => {
+    const text = formData.get("text").trim();
+    const imageFile = formData.get("image");
+    if (!text && !imageFile) return;
+    if (imageFile.name) {
+      const base64Image = await imageFileToBase64(imageFile);
+      await sendMessage({
+        text: text,
+        image: base64Image,
+        chatId: selectedChatId,
+      });
+      setTextLength(0);
+      setImage(null);
+    } else {
+      await sendMessage({ text, chatId: selectedChatId });
+      setTextLength(0);
+      setImage(null);
+    }
   };
 
   return (
-    <form onSubmit={handleSendMessage} className="p-4 bg-gray-800 flex gap-2">
-      <input
-        type="text"
-        placeholder="Type a message..."
-        value={currentMessage.text || ""}
-        onChange={handleInputChange}
-        className="flex-1 rounded-lg px-3 py-2 text-sm outline-none bg-gray-700 text-gray-100 placeholder-gray-400"
-      />
-      <button
-        type="submit"
-        disabled={isSendingMessage || !currentMessage.text}
-        className={`px-4 py-2 rounded-lg text-white text-sm transition ${
-          isSendingMessage || !currentMessage.text
-            ? "bg-blue-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
-      >
-        {isSendingMessage ? "Sending..." : "Send"}
-      </button>
+    <form
+      action={handleSendMessage}
+      className="p-4 bg-gray-800 flex flex-col gap-4"
+    >
+      {image && <NewMessageImagePreview image={image} />}
+      <div className="flex flex-row gap-2 items-center">
+        <NewMessageInputField setTextLength={setTextLength} />
+        <SelectImageButton onChange={handleImageChange} />
+        <SendButton />
+      </div>
     </form>
   );
 };

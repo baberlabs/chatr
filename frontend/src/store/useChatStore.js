@@ -13,11 +13,8 @@ export const useChatStore = create((set, get) => ({
   isDeletingMessage: false,
   selectedUser: null,
   selectedChatId: null,
-  currentMessage: "",
   chatMode: false,
   ghostTypingIndicatorLength: 0,
-
-  setCurrentMessage: (message) => set({ currentMessage: message }),
 
   setGhostTypingIndicatorLength: (length) =>
     set({ ghostTypingIndicatorLength: length }),
@@ -118,7 +115,7 @@ export const useChatStore = create((set, get) => ({
   sendMessage: async (message) => {
     set({ isSendingMessage: true });
     try {
-      if (message.text.trim() === "") return;
+      if (message.text.trim() === "" && message.image.trim() === "") return;
       const response = await api.post(`/messages`, message);
       const newMessage = response.data.data;
       const { socket } = useAuthStore.getState();

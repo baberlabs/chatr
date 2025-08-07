@@ -1,5 +1,6 @@
 const MessageText = ({ messageText }) => {
-  return <p className="text-sm break-words">{messageText}</p>;
+  if (!messageText) return null;
+  return <p className="py-1 px-2 text-sm break-words">{messageText}</p>;
 };
 
 export default MessageText;
