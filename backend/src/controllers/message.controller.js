@@ -6,6 +6,7 @@ import {
 import { ensureUserIdIsPresent } from "./helpers/user.helpers.js";
 import {
   validateImageFormat,
+  validateImageSize,
   validateObjectId,
   validateText,
 } from "./helpers/validation.helpers.js";
@@ -40,6 +41,7 @@ export const sendMessage = async (req, res) => {
   }
   if (image) {
     validateImageFormat(image);
+    validateImageSize(image);
     messageData.image = await uploadImageToCloudinary(image);
   }
   const newMessage = await createNewMessage(messageData);
