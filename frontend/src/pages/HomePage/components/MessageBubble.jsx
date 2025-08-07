@@ -5,6 +5,7 @@ import { useChatStore } from "@/store/useChatStore";
 import MessageText from "./MessageText";
 import MessageTimestamp from "./MessageTimestamp";
 import MessageMenu from "./MessageMenu";
+import MessageImage from "./MessageImage";
 
 function MessageBubble({ isMe, msg, messageHandlers }) {
   const { isDeletingMessage } = useChatStore();
@@ -20,7 +21,7 @@ function MessageBubble({ isMe, msg, messageHandlers }) {
       >
         <div className="max-w-[70%] flex flex-col">
           <div
-            className={`px-4 py-2 relative ${
+            className={`p-1 relative ${
               isMe
                 ? "bg-blue-600 text-white self-end rounded-tl-xl rounded-bl-xl rounded-tr-xl"
                 : "bg-gray-700 text-gray-100 self-start rounded-tr-xl rounded-br-xl rounded-tl-xl"
@@ -55,7 +56,10 @@ function MessageBubble({ isMe, msg, messageHandlers }) {
                 />
               )}
             </div>
-            <MessageText messageText={msg.text} />
+            <div className="flex flex-col gap-2 max-w-100">
+              {msg.image && <MessageImage image={msg.image} />}
+              <MessageText messageText={msg.text} />
+            </div>
           </div>
           <MessageTimestamp isMe={isMe} createdAt={msg.createdAt} />
         </div>

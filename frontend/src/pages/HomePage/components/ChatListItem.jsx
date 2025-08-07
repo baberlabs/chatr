@@ -4,6 +4,8 @@ import { useChatStore } from "@/store/useChatStore";
 
 import UserAvatar from "./UserAvatar";
 import OnlineStatusDisplay from "./OnlineStatusDisplay";
+import { Image } from "lucide-react";
+import { formatMessage } from "../functions/formatMessage";
 
 const ChatListItem = ({ chat, otherUser, isOtherUser, onClick }) => {
   const { onlineUsers } = useAuthStore();
@@ -12,8 +14,8 @@ const ChatListItem = ({ chat, otherUser, isOtherUser, onClick }) => {
   const isActive = otherUser?._id === selectedUser?._id;
   const isOnline = onlineUsers.includes(otherUser?._id);
   const formattedDate = displayDate(chat.updatedAt);
-  const messageText = chat.latestMessage?.text || "No message";
-  const prefix = isOtherUser ? "" : "You: ";
+  const visibleText = formatMessage({ chat, isOtherUser });
+  const hasText = chat.latestMessage?.text;
 
   return (
     <li
@@ -30,9 +32,16 @@ const ChatListItem = ({ chat, otherUser, isOtherUser, onClick }) => {
 
       <div className="flex-1">
         <p>{otherUser?.fullName || "Unknown User"}</p>
-        <p className="text-gray-400 text-xs">
-          {prefix}
-          {messageText}
+
+        <p className="text-gray-400 text-xs mt-0.5">
+          {hasText ? (
+            <span>{visibleText}</span>
+          ) : (
+            <span className="flex items-center gap-1">
+              <Image className="size-3" />
+              {visibleText}
+            </span>
+          )}
         </p>
       </div>
 
