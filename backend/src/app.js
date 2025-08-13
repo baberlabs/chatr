@@ -4,7 +4,7 @@ import cors from "cors";
 import path from "path";
 
 import registerRoutes from "./routes/index.js";
-import { globalErrorHandler } from "./utils/globalErrorHandler.js";
+import { errorHandler } from "./errors.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -21,7 +21,7 @@ app.use(cookieParser());
 
 registerRoutes(app);
 
-app.use(globalErrorHandler);
+app.use(errorHandler);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

@@ -6,6 +6,7 @@ import { beforeEach, describe, jest } from "@jest/globals";
 
 import app from "../src/app.js";
 import cloudinary from "../src/utils/cloudinary.js";
+import { ErrorCodes } from "../src/errors.js";
 
 let mongo;
 
@@ -74,17 +75,17 @@ describe("User Routes", () => {
       const res = await request(app).get(endpoint);
 
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return all users except the requesting user", async () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.users)).toBe(true);
-      expect(res.body.users.length).toBe(users.length - 1);
+      expect(Array.isArray(res.body.data.users)).toBe(true);
+      expect(res.body.data.users.length).toBe(users.length - 1);
 
-      for (const user of res.body.users) {
+      for (const user of res.body.data.users) {
         expect(user).toMatchObject({
           _id: expect.any(String),
           fullName: expect.any(String),
@@ -126,8 +127,8 @@ describe("User Routes", () => {
         .post("/api/v1/auth/register")
         .send(users[1]);
 
-      userOneId = res1.body.user._id;
-      userTwoId = res2.body.user._id;
+      userOneId = res1.body.data.user._id;
+      userTwoId = res2.body.data.user._id;
 
       const loginRes = await request(app)
         .post("/api/v1/auth/login")
@@ -140,7 +141,7 @@ describe("User Routes", () => {
     it("should return 401 if not authenticated", async () => {
       const res = await request(app).get(`${endpointBase}/${userTwoId}`);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return 400 for invalid user ID format", async () => {
@@ -148,7 +149,7 @@ describe("User Routes", () => {
         .get(`${endpointBase}/invalid-id-format`)
         .set("Cookie", cookies);
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid User ID");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ID_INVALID);
     });
 
     it("should return 404 if user does not exist", async () => {
@@ -158,7 +159,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies);
 
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("User Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_NOT_FOUND);
     });
 
     it("should return with user data if authenticated and valid ID", async () => {
@@ -167,15 +168,20 @@ describe("User Routes", () => {
         .set("Cookie", cookies);
 
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userTwoId,
-        fullName: users[1].fullName,
-        email: users[1].email,
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User retrieved",
+        data: {
+          user: {
+            _id: userTwoId,
+            fullName: users[1].fullName,
+            email: users[1].email,
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
 
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
   });
 
@@ -207,8 +213,8 @@ describe("User Routes", () => {
         .post("/api/v1/auth/register")
         .send(users[1]);
 
-      userOneId = res1.body.user._id;
-      userTwoId = res2.body.user._id;
+      userOneId = res1.body.data.user._id;
+      userTwoId = res2.body.data.user._id;
 
       const loginRes = await request(app)
         .post("/api/v1/auth/login")
@@ -225,7 +231,7 @@ describe("User Routes", () => {
         .put(`${endpointBase}/${userOneId}`)
         .send({ fullName: "Mr Malicious" });
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return 400 for invalid user ID format", async () => {
@@ -234,7 +240,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: "Mr Invalid" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid User ID");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ID_INVALID);
     });
 
     it("should return 404 if user not found", async () => {
@@ -244,7 +250,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: "Mr NonExistent" });
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("User Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_NOT_FOUND);
     });
 
     it("should return 403 for updating someone else's profile", async () => {
@@ -253,7 +259,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: "Mr Someone Else" });
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("Permission Denied");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ACCESS_DENIED);
     });
 
     it("should return 400 if no fields are provided", async () => {
@@ -262,7 +268,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({});
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("At least one field must be provided");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_UPDATE_FIELDS_REQUIRED);
     });
 
     it("should return 400 if fullName is too short", async () => {
@@ -271,9 +277,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: "Al" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Full name should be at least 3 characters long"
-      );
+      expect(res.body.error.code).toBe(ErrorCodes.USER_FULLNAME_TOO_SHORT);
     });
 
     it("should return 400 if fullName is too long", async () => {
@@ -283,9 +287,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: longName });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Full name should be less than 50 characters long"
-      );
+      expect(res.body.error.code).toBe(ErrorCodes.USER_FULLNAME_TOO_LONG);
     });
 
     it("should return 400 if password is too short", async () => {
@@ -294,9 +296,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ password: "123" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Password should be at least 8 characters long"
-      );
+      expect(res.body.error.code).toBe(ErrorCodes.USER_PASSWORD_TOO_SHORT);
     });
 
     it("should return 400 if email is malformed", async () => {
@@ -305,7 +305,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ email: "not-an-email" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid email");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_INVALID);
     });
 
     it("should return 409 if email is already taken", async () => {
@@ -314,7 +314,7 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ email: users[1].email });
       expect(res.status).toBe(409);
-      expect(res.body.message).toBe("Email already exists");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_ALREADY_EXISTS);
     });
 
     it("should update fullName successfully", async () => {
@@ -323,14 +323,19 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ fullName: "Mr NewName" });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: "Mr NewName",
-        email: users[0].email,
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: "Mr NewName",
+            email: users[0].email,
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
 
     it("should update password successfully", async () => {
@@ -339,25 +344,33 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ password: "NewPassword123" });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: users[0].email,
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: users[0].email,
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+
+      expect(res.body.data.user).not.toHaveProperty("password");
 
       const resLogout = await request(app).post("/api/v1/auth/logout");
       expect(resLogout.status).toBe(200);
-      expect(resLogout.body.message).toBe("User logged out successfully");
+      expect(resLogout.body.message).toBe("User logged out");
 
       const resLoginOldPassword = await request(app)
         .post("/api/v1/auth/login")
         .send({ email: users[0].email, password: users[0].password });
 
       expect(resLoginOldPassword.status).toBe(401);
-      expect(resLoginOldPassword.body.message).toBe("Invalid credentials");
+      expect(resLoginOldPassword.body.error.code).toBe(
+        ErrorCodes.AUTH_CREDENTIALS_INVALID
+      );
 
       const resLoginNewPassword = await request(app)
         .post("/api/v1/auth/login")
@@ -365,13 +378,15 @@ describe("User Routes", () => {
 
       expect(resLoginNewPassword.status).toBe(200);
       expect(resLoginNewPassword.body).toMatchObject({
-        message: "User logged in successfully",
-        user: {
-          _id: userOneId,
-          fullName: users[0].fullName,
-          email: users[0].email,
-          profilePic: "",
-          isVerified: false,
+        message: "User logged in",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: users[0].email,
+            profilePic: "",
+            isVerified: false,
+          },
         },
       });
     });
@@ -382,14 +397,19 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ email: "new@email.com" });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: "new@email.com",
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: "new@email.com",
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
 
     it("should normalize email to lowercase", async () => {
@@ -398,14 +418,19 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ email: "New@Email.COM" });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: "new@email.com",
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: "new@email.com",
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
 
     it("should update profilePic successfully", async () => {
@@ -421,14 +446,19 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ profilePic: base64Image });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: users[0].email,
-        profilePic: imageURL,
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: users[0].email,
+            profilePic: imageURL,
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
 
     it("should trim whitespace from inputs", async () => {
@@ -437,14 +467,19 @@ describe("User Routes", () => {
         .set("Cookie", cookies)
         .send({ email: "     new@email.com   " });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: "new@email.com",
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: "new@email.com",
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
 
     it("should update multiple fields successfully", async () => {
@@ -456,14 +491,19 @@ describe("User Routes", () => {
           email: "new@email.com",
         });
       expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: "Mr New",
-        email: "new@email.com",
-        profilePic: "",
-        isVerified: false,
+      expect(res.body).toMatchObject({
+        message: "User profile updated",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: "Mr New",
+            email: "new@email.com",
+            profilePic: "",
+            isVerified: false,
+          },
+        },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
     });
   });
 
@@ -496,11 +536,11 @@ describe("User Routes", () => {
       expect(res1.status).toBe(201);
       expect(res2.status).toBe(201);
 
-      expect(res1.body.user).toBeDefined();
-      expect(res2.body.user).toBeDefined();
+      expect(res1.body.data.user).toBeDefined();
+      expect(res2.body.data.user).toBeDefined();
 
-      userOneId = res1.body.user._id;
-      userTwoId = res2.body.user._id;
+      userOneId = res1.body.data.user._id;
+      userTwoId = res2.body.data.user._id;
 
       const loginEndpoint = "/api/v1/auth/login";
 
@@ -512,7 +552,7 @@ describe("User Routes", () => {
       const loginRes = await request(app).post(loginEndpoint).send(loginUser);
 
       expect(loginRes.status).toBe(200);
-      expect(loginRes.body.user).toBeDefined();
+      expect(loginRes.body.data.user).toBeDefined();
 
       cookies = loginRes.headers["set-cookie"];
       expect(cookies).toBeDefined();
@@ -521,7 +561,7 @@ describe("User Routes", () => {
     it("should return 401 if not authenticated", async () => {
       const res = await request(app).delete(`${endpointBase}/${userOneId}`);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return 403 for deleting someone else's account", async () => {
@@ -529,7 +569,7 @@ describe("User Routes", () => {
         .delete(`${endpointBase}/${userTwoId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("Permission Denied");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ACCESS_DENIED);
     });
 
     it("should return 400 for invalid user ID format", async () => {
@@ -537,7 +577,7 @@ describe("User Routes", () => {
         .delete(`${endpointBase}/invalid-user-id`)
         .set("Cookie", cookies);
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid User ID");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ID_INVALID);
     });
 
     it("should return 404 if user not found", async () => {
@@ -546,7 +586,7 @@ describe("User Routes", () => {
         .delete(`${endpointBase}/${nonExistentId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("User Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_NOT_FOUND);
     });
 
     it("should delete the user successfully", async () => {
@@ -555,23 +595,27 @@ describe("User Routes", () => {
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User account deleted successfully",
-        user: {
-          _id: userOneId,
-          fullName: users[0].fullName,
-          email: users[0].email,
-          profilePic: "",
-          isVerified: false,
+        message: "User account deleted",
+        data: {
+          user: {
+            _id: userOneId,
+            fullName: users[0].fullName,
+            email: users[0].email,
+            profilePic: "",
+            isVerified: false,
+          },
         },
       });
-      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.data.user).not.toHaveProperty("password");
 
       // should not allow login after account deletion
       const fetchRes = await request(app)
         .post("/api/v1/auth/login")
         .send({ email: users[0].email, password: users[0].password });
       expect(fetchRes.status).toBe(401);
-      expect(fetchRes.body.message).toBe("Invalid credentials");
+      expect(fetchRes.body.error.code).toBe(
+        ErrorCodes.AUTH_CREDENTIALS_INVALID
+      );
     });
   });
 });
