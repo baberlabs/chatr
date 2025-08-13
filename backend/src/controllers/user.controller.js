@@ -1,19 +1,15 @@
-// Errors are caught with src/utils/catchAsync.js
+/**
+ * Errors are caught with catchAsync on the routes
+ * themselves, hence, no try-catch is needed here.
+ */
 
-import mongoose, { isValidObjectId } from "mongoose";
-import bcrypt from "bcryptjs";
-
-import User from "../models/user.model.js";
-import cloudinary from "../utils/cloudinary.js";
+import { UserService } from "../services/user.service.js";
 import { userResponse } from "../utils/responses.js";
-import { isValidEmail } from "../utils/validation.js";
-import { createError, ErrorCodes } from "../errors.js";
-import { isValidImageFormat, isValidImageSize } from "../utils/validation.js";
 
 export const getAllUsers = async (req, res) => {
-  const users = await User.find({ _id: { $ne: req.user._id } })
-    .select("-password")
-    .lean();
+  const userId = req.user._id;
+
+  const users = await UserService.getAllUsersExcept(userId);
 
   res.status(200).json({
     message: "Users retrieved",
@@ -24,13 +20,7 @@ export const getAllUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   const userId = req.params.id;
 
-  if (!userId) createError(ErrorCodes.USER_ID_REQUIRED);
-
-  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
-
-  const user = await User.findById(userId).select("-password").lean();
-
-  if (!user) throw createError(ErrorCodes.USER_NOT_FOUND);
+  const user = await UserService.getUserById(userId);
 
   res.status(200).json({
     message: "User retrieved",
@@ -43,63 +33,13 @@ export const getUserById = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   const authUserId = req.user._id;
   const userId = req.params.id;
-  const fullName = req.body.fullName?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const password = req.body.password?.trim();
-  const profilePic = req.body.profilePic?.trim();
+  const updateData = ({ fullName, email, password, profilePic } = req.body);
 
-  if (!userId) throw createError(ErrorCodes.USER_ID_REQUIRED);
-
-  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
-
-  if (!fullName && !email && !password && !profilePic)
-    throw createError(ErrorCodes.USER_UPDATE_FIELDS_REQUIRED);
-
-  const user = await User.findById(userId);
-
-  if (!user) throw createError(ErrorCodes.USER_NOT_FOUND);
-
-  if (!authUserId.equals(user._id))
-    throw createError(ErrorCodes.USER_ACCESS_DENIED);
-
-  if (fullName) {
-    if (fullName.length < 3)
-      throw createError(ErrorCodes.USER_FULLNAME_TOO_SHORT);
-    if (fullName.length > 50)
-      throw createError(ErrorCodes.USER_FULLNAME_TOO_LONG);
-    user.fullName = fullName;
-  }
-
-  if (password) {
-    if (password.length < 8)
-      throw createError(ErrorCodes.USER_PASSWORD_TOO_SHORT);
-    user.password = await bcrypt.hash(password, 10);
-  }
-
-  if (email) {
-    if (!isValidEmail(email)) throw createError(ErrorCodes.USER_EMAIL_INVALID);
-    const emailExists = await User.findOne({ email }).lean();
-    if (emailExists) throw createError(ErrorCodes.USER_EMAIL_ALREADY_EXISTS);
-    user.email = email;
-  }
-
-  if (profilePic) {
-    if (!isValidImageFormat(profilePic))
-      throw createError(ErrorCodes.USER_UPDATE_IMAGE_INVALID);
-    if (!isValidImageSize(profilePic))
-      throw createError(ErrorCodes.USER_UPDATE_IMAGE_TOO_BIG);
-    try {
-      const uploadResult = await cloudinary.uploader.upload(profilePic, {
-        folder: "profile_pics",
-        resource_type: "image",
-      });
-      user.profilePic = uploadResult.secure_url;
-    } catch (error) {
-      throw createError(ErrorCodes.USER_UPDATE_IMAGE_FAILED, error.message);
-    }
-  }
-
-  const updatedUser = await user.save();
+  const updatedUser = await UserService.updateUserProfile(
+    authUserId,
+    userId,
+    updateData
+  );
 
   res.status(200).json({
     message: "User profile updated",
@@ -113,18 +53,7 @@ export const deleteUser = async (req, res) => {
   const authUserId = req.user._id;
   const userId = req.params.id;
 
-  if (!userId) throw createError(ErrorCodes.USER_ID_REQUIRED);
-
-  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
-
-  const user = await User.findById(userId);
-
-  if (!user) throw createError(ErrorCodes.USER_NOT_FOUND);
-
-  if (!authUserId.equals(userId))
-    throw createError(ErrorCodes.USER_ACCESS_DENIED);
-
-  await user.deleteOne();
+  const user = await UserService.deleteUser(authUserId, userId);
 
   res.status(200).json({
     message: "User account deleted",
