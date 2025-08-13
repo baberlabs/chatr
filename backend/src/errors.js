@@ -34,14 +34,14 @@ export const ErrorCodes = {
 
   // MESSAGE - Message operations
   MESSAGE_CONTENT_REQUIRED: "MESSAGE_CONTENT_REQUIRED",
-  MESSAGE_CONTENT_TOO_LONG: "MESSAGE_CONTENT_TOO_LONG",
+  MESSAGE_TEXT_TOO_LONG: "MESSAGE_TEXT_TOO_LONG",
   MESSAGE_NOT_FOUND: "MESSAGE_NOT_FOUND",
   MESSAGE_ID_REQUIRED: "MESSAGE_ID_REQUIRED",
   MESSAGE_ID_INVALID: "MESSAGE_ID_INVALID",
   MESSAGE_ACCESS_DENIED: "MESSAGE_ACCESS_DENIED",
   MESSAGE_IMAGE_INVALID: "MESSAGE_IMAGE_INVALID",
   MESSAGE_IMAGE_TOO_BIG: "MESSAGE_IMAGE_TOO_BIG",
-  MESSAGE_UPLOAD_FAILED: "MESSAGE_UPLOAD_FAILED",
+  MESSAGE_IMAGE_UPLOAD_FAILED: "MESSAGE_IMAGE_UPLOAD_FAILED",
 
   // VALIDATION - Generic validation errors
   VALIDATION_INVALID_FORMAT: "VALIDATION_INVALID_FORMAT",
@@ -167,9 +167,9 @@ const ERROR_MAPPINGS = {
     status: 400,
     message: "Message content is required",
   },
-  [ErrorCodes.MESSAGE_CONTENT_TOO_LONG]: {
+  [ErrorCodes.MESSAGE_TEXT_TOO_LONG]: {
     status: 400,
-    message: "Message content should be at most 1000 characters long",
+    message: "Text should be at most 1000 characters long",
   },
   [ErrorCodes.MESSAGE_NOT_FOUND]: {
     status: 404,
@@ -195,9 +195,9 @@ const ERROR_MAPPINGS = {
     status: 400,
     message: "Image size exceeds 5 MB",
   },
-  [ErrorCodes.MESSAGE_UPLOAD_FAILED]: {
+  [ErrorCodes.MESSAGE_IMAGE_UPLOAD_FAILED]: {
     status: 500,
-    message: "Message upload failed",
+    message: "Image upload failed",
   },
 
   // VALIDATION

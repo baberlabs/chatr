@@ -179,7 +179,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, text: longText });
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_CONTENT_TOO_LONG);
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_TEXT_TOO_LONG);
     });
 
     it("should return 400 if image is not valid base64", async () => {
@@ -317,7 +317,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, image: base64Image });
       expect(res.status).toBe(500);
-      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_UPLOAD_FAILED);
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_IMAGE_UPLOAD_FAILED);
     });
   });
 

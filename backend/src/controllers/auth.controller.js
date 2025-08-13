@@ -1,99 +1,31 @@
-// Errors are caught with src/utils/catchAsync.js
+/**
+ * Errors are caught with catchAsync on the routes
+ * themselves, hence, no try-catch is needed here.
+ */
 
-import bcrypt from "bcryptjs";
-
-import User from "../models/user.model.js";
-import { generateJWT } from "../utils/generateJWT.js";
+import { AuthService } from "../services/auth.service.js";
 import { userResponse } from "../utils/responses.js";
-import { isValidEmail } from "../utils/validation.js";
-import { ErrorCodes, createError } from "../errors.js";
+import { generateJWT } from "../utils/generateJWT.js";
 
 export const registerUser = async (req, res) => {
-  const fullName = req.body.fullName?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const password = req.body.password?.trim();
+  const { fullName, email, password } = req.body;
 
-  if (!fullName) {
-    throw createError(ErrorCodes.USER_FULLNAME_REQUIRED);
-  }
+  const user = await AuthService.registerUser(fullName, email, password);
 
-  if (!email) {
-    throw createError(ErrorCodes.USER_EMAIL_REQUIRED);
-  }
-
-  if (!password) {
-    throw createError(ErrorCodes.USER_PASSWORD_REQUIRED);
-  }
-
-  if (fullName.length < 3) {
-    throw createError(ErrorCodes.USER_FULLNAME_TOO_SHORT);
-  }
-
-  if (fullName.length > 50) {
-    throw createError(ErrorCodes.USER_FULLNAME_TOO_LONG);
-  }
-
-  if (!isValidEmail(email)) {
-    throw createError(ErrorCodes.USER_EMAIL_INVALID);
-  }
-
-  if (password.length < 8) {
-    throw createError(ErrorCodes.USER_PASSWORD_TOO_SHORT);
-  }
-
-  if (await User.findOne({ email })) {
-    throw createError(ErrorCodes.USER_EMAIL_ALREADY_EXISTS);
-  }
-
-  const newUser = new User({
-    fullName,
-    email,
-    password: await bcrypt.hash(password, 10),
-  });
-
-  await newUser.save();
-
-  generateJWT(newUser._id, res);
+  generateJWT(user._id, res);
 
   res.status(201).json({
     message: "User registered",
     data: {
-      user: userResponse(newUser),
+      user: userResponse(user),
     },
   });
 };
 
 export const loginUser = async (req, res) => {
-  const email = req.body.email?.trim().toLowerCase();
-  const password = req.body.password?.trim();
+  const { email, password } = req.body;
 
-  if (!email) {
-    throw createError(ErrorCodes.USER_EMAIL_REQUIRED);
-  }
-
-  if (!password) {
-    throw createError(ErrorCodes.USER_PASSWORD_REQUIRED);
-  }
-
-  if (!isValidEmail(email)) {
-    throw createError(ErrorCodes.USER_EMAIL_INVALID);
-  }
-
-  if (password.length < 8) {
-    throw createError(ErrorCodes.USER_PASSWORD_TOO_SHORT);
-  }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw createError(ErrorCodes.AUTH_CREDENTIALS_INVALID);
-  }
-
-  const isPasswordMatch = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordMatch) {
-    throw createError(ErrorCodes.AUTH_CREDENTIALS_INVALID);
-  }
+  const user = await AuthService.loginUser(email, password);
 
   generateJWT(user._id, res);
 
