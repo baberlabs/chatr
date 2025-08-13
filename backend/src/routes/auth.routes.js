@@ -14,6 +14,10 @@ const router = Router();
 router.post("/register", catchAsync(registerUser));
 router.post("/login", catchAsync(loginUser));
 router.post("/logout", catchAsync(logoutUser));
-router.get("/status", authenticateUser, catchAsync(checkAuthStatus));
+router.get(
+  "/status",
+  catchAsync(authenticateUser),
+  catchAsync(checkAuthStatus)
+);
 
 export default router;

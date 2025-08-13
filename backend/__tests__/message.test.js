@@ -15,6 +15,7 @@ import {
 
 import app from "../src/app.js";
 import cloudinary from "../src/utils/cloudinary.js";
+import { ErrorCodes } from "../src/errors.js";
 
 let mongo;
 
@@ -75,8 +76,8 @@ describe("Message Routes", () => {
       expect(resOne.status).toBe(201);
       expect(resTwo.status).toBe(201);
 
-      userOneId = resOne.body.user._id;
-      userTwoId = resTwo.body.user._id;
+      userOneId = resOne.body.data.user._id;
+      userTwoId = resTwo.body.data.user._id;
 
       const loginData = { email: users[0].email, password: users[0].password };
       const loginRes = await request(app).post(loginEndpoint).send(loginData);
@@ -87,7 +88,7 @@ describe("Message Routes", () => {
         .set("Cookie", loginRes.headers["set-cookie"])
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      chatId = chatRes.body.data._id;
+      chatId = chatRes.body.data.chat._id;
 
       cookies = loginRes.headers["set-cookie"];
       expect(cookies).toBeDefined();
@@ -98,7 +99,7 @@ describe("Message Routes", () => {
     it("should return `401` if not authenticated", async () => {
       const res = await request(app).post(endpoint).send({ text: "Hello" });
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return `400` if `chatId` is not provided", async () => {
@@ -107,7 +108,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ text: "Hello" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Missing Chat ID");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ID_REQUIRED);
     });
 
     it("should return `400` for invalid `chatId` format", async () => {
@@ -116,7 +117,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId: "invalid-chat-id", text: "Hello" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid Chat ID");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ID_INVALID);
     });
 
     it("should return `404` if `chatId` does not exist", async () => {
@@ -126,7 +127,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId: nonExistentChatId, text: "Hello" });
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("Chat Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_NOT_FOUND);
     });
 
     it("should return `403` if user is not a participant in the chat", async () => {
@@ -150,7 +151,7 @@ describe("Message Routes", () => {
         .set("Cookie", userThreeCookies)
         .send({ chatId, text: "Hello" });
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("You are not a participant of this chat");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ACCESS_DENIED);
     });
 
     it("should return 400 if both text and image are missing", async () => {
@@ -159,7 +160,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Message content is missing");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_CONTENT_REQUIRED);
     });
 
     it("should return 400 if text is empty or only whitespace", async () => {
@@ -168,7 +169,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, text: "   " });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Message content is missing");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_CONTENT_REQUIRED);
     });
 
     it("should return 400 if text exceeds 1000 characters", async () => {
@@ -178,9 +179,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, text: longText });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe(
-        "Message text exceeds maximum length of 1000 characters"
-      );
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_CONTENT_TOO_LONG);
     });
 
     it("should return 400 if image is not valid base64", async () => {
@@ -189,7 +188,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, image: "not-a-valid-base64" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid Image Format");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_IMAGE_INVALID);
     });
 
     it("should return 201 when sending text-only message using chatId", async () => {
@@ -199,12 +198,14 @@ describe("Message Routes", () => {
         .send({ chatId, text: "Hello, this is a text message!" });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Message sent successfully",
+        message: "Message sent",
         data: {
-          chatId,
-          text: "Hello, this is a text message!",
-          senderId: userOneId,
-          seen: false,
+          message: {
+            chatId,
+            text: "Hello, this is a text message!",
+            senderId: userOneId,
+            seen: false,
+          },
         },
       });
     });
@@ -219,12 +220,14 @@ describe("Message Routes", () => {
         });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Message sent successfully",
+        message: "Message sent",
         data: {
-          chatId,
-          text: "Hello with leading and trailing spaces!",
-          senderId: userOneId,
-          seen: false,
+          message: {
+            chatId,
+            text: "Hello with leading and trailing spaces!",
+            senderId: userOneId,
+            seen: false,
+          },
         },
       });
     });
@@ -236,12 +239,14 @@ describe("Message Routes", () => {
         .send({ chatId, text: "This message should not be seen yet." });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Message sent successfully",
+        message: "Message sent",
         data: {
-          chatId,
-          text: "This message should not be seen yet.",
-          senderId: userOneId,
-          seen: false,
+          message: {
+            chatId,
+            text: "This message should not be seen yet.",
+            senderId: userOneId,
+            seen: false,
+          },
         },
       });
     });
@@ -260,12 +265,14 @@ describe("Message Routes", () => {
         .send({ chatId, image: base64Image });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Message sent successfully",
+        message: "Message sent",
         data: {
-          chatId,
-          image: mockImageUrl,
-          senderId: userOneId,
-          seen: false,
+          message: {
+            chatId,
+            image: mockImageUrl,
+            senderId: userOneId,
+            seen: false,
+          },
         },
       });
       expect(cloudinary.uploader.upload).toHaveBeenCalledWith(base64Image, {
@@ -288,13 +295,15 @@ describe("Message Routes", () => {
         .send({ chatId, text: "Hello with an image!", image: base64Image });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Message sent successfully",
+        message: "Message sent",
         data: {
-          chatId,
-          text: "Hello with an image!",
-          image: mockImageUrl,
-          senderId: userOneId,
-          seen: false,
+          message: {
+            chatId,
+            text: "Hello with an image!",
+            image: mockImageUrl,
+            senderId: userOneId,
+            seen: false,
+          },
         },
       });
     });
@@ -308,7 +317,7 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ chatId, image: base64Image });
       expect(res.status).toBe(500);
-      expect(res.body.message).toBe("Image upload failed");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_UPLOAD_FAILED);
     });
   });
 
@@ -349,9 +358,9 @@ describe("Message Routes", () => {
       expect(resOne.status).toBe(201);
       expect(resTwo.status).toBe(201);
       expect(resThree.status).toBe(201);
-      userOneId = resOne.body.user._id;
-      userTwoId = resTwo.body.user._id;
-      userThreeId = resThree.body.user._id;
+      userOneId = resOne.body.data.user._id;
+      userTwoId = resTwo.body.data.user._id;
+      userThreeId = resThree.body.data.user._id;
       const loginData = { email: users[0].email, password: users[0].password };
       const loginRes = await request(app).post(loginEndpoint).send(loginData);
       expect(loginRes.status).toBe(200);
@@ -362,14 +371,14 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      chatId = chatRes.body.data._id;
+      chatId = chatRes.body.data.chat._id;
       expect(chatId).toBeDefined();
     });
 
     it("should return `401` if user is not authenticated", async () => {
       const res = await request(app).get(`${endpoint}/${chatId}`);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return `400` if `chatId` is not a valid Mongo ID", async () => {
@@ -377,7 +386,7 @@ describe("Message Routes", () => {
         .get(`${endpoint}/invalid-chat-id`)
         .set("Cookie", cookies);
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid Chat ID");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ID_INVALID);
     });
 
     it("should return `404` if chat with `chatId` does not exist", async () => {
@@ -386,7 +395,7 @@ describe("Message Routes", () => {
         .get(`${endpoint}/${nonExistendChatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("Chat Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_NOT_FOUND);
     });
 
     it("should return `403` if user is not a participant in the chat", async () => {
@@ -399,7 +408,7 @@ describe("Message Routes", () => {
         .get(`${endpoint}/${chatId}`)
         .set("Cookie", userThreeCookies);
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("You are not a participant of this chat");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ACCESS_DENIED);
     });
 
     it("should return `200` and an empty array if no messages exist for the chat", async () => {
@@ -407,8 +416,12 @@ describe("Message Routes", () => {
         .get(`${endpoint}/${chatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.data).toEqual([]);
-      expect(res.body.message).toBe("Messages retrieved successfully");
+      expect(res.body).toMatchObject({
+        message: "Messages retrieved",
+        data: {
+          messages: [],
+        },
+      });
     });
 
     it("should return `200` and an array of messages for a valid chatId", async () => {
@@ -419,11 +432,16 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send(message1);
       expect(resMessageUser1.status).toBe(201);
-      expect(resMessageUser1.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User One!",
-        senderId: userOneId,
-        seen: false,
+      expect(resMessageUser1.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User One!",
+            senderId: userOneId,
+            seen: false,
+          },
+        },
       });
       const resLoginUser2 = await request(app)
         .post("/api/v1/auth/login")
@@ -435,36 +453,45 @@ describe("Message Routes", () => {
         .set("Cookie", userTwoCookies)
         .send(message2);
       expect(resMessageUser2.status).toBe(201);
-      expect(resMessageUser2.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User Two!",
-        senderId: userTwoId,
-        seen: false,
+      expect(resMessageUser2.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User Two!",
+            senderId: userTwoId,
+            seen: false,
+          },
+        },
       });
       const res = await request(app)
         .get(`${endpoint}/${chatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Messages retrieved successfully");
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.data).toMatchObject([
-        {
-          _id: expect.any(String),
-          chatId,
-          senderId: userOneId,
-          text: "Hello from User One!",
-          seen: false,
-          createdAt: expect.any(String),
+      expect(res.body.data.messages).toHaveLength(2);
+      expect(res.body).toMatchObject({
+        message: "Messages retrieved",
+        data: {
+          messages: [
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userOneId,
+              text: "Hello from User One!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userTwoId,
+              text: "Hello from User Two!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+          ],
         },
-        {
-          _id: expect.any(String),
-          chatId,
-          senderId: userTwoId,
-          text: "Hello from User Two!",
-          seen: false,
-          createdAt: expect.any(String),
-        },
-      ]);
+      });
     });
 
     it("should return `200` and messages sorted by createdAt in ascending order", async () => {
@@ -475,11 +502,16 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send(message1);
       expect(resMessageUser1.status).toBe(201);
-      expect(resMessageUser1.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User One!",
-        senderId: userOneId,
-        seen: false,
+      expect(resMessageUser1.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User One!",
+            senderId: userOneId,
+            seen: false,
+          },
+        },
       });
       const resLoginUser2 = await request(app)
         .post("/api/v1/auth/login")
@@ -491,33 +523,44 @@ describe("Message Routes", () => {
         .set("Cookie", userTwoCookies)
         .send(message2);
       expect(resMessageUser2.status).toBe(201);
-      expect(resMessageUser2.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User Two!",
-        senderId: userTwoId,
-        seen: false,
+      expect(resMessageUser2.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User Two!",
+            senderId: userTwoId,
+            seen: false,
+          },
+        },
       });
       const res = await request(app)
         .get(`${endpoint}/${chatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Messages retrieved successfully");
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.data[0]).toMatchObject({
-        _id: expect.any(String),
-        chatId,
-        senderId: userOneId,
-        text: "Hello from User One!",
-        seen: false,
-        createdAt: expect.any(String),
-      });
-      expect(res.body.data[1]).toMatchObject({
-        _id: expect.any(String),
-        chatId,
-        senderId: userTwoId,
-        text: "Hello from User Two!",
-        seen: false,
-        createdAt: expect.any(String),
+      expect(res.body.data.messages).toHaveLength(2);
+      expect(res.body).toMatchObject({
+        message: "Messages retrieved",
+        data: {
+          messages: [
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userOneId,
+              text: "Hello from User One!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userTwoId,
+              text: "Hello from User Two!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+          ],
+        },
       });
     });
 
@@ -529,11 +572,16 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send(message1);
       expect(resMessageUser1.status).toBe(201);
-      expect(resMessageUser1.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User One!",
-        senderId: userOneId,
-        seen: false,
+      expect(resMessageUser1.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User One!",
+            senderId: userOneId,
+            seen: false,
+          },
+        },
       });
       const resLoginUser2 = await request(app)
         .post("/api/v1/auth/login")
@@ -545,25 +593,44 @@ describe("Message Routes", () => {
         .set("Cookie", userTwoCookies)
         .send(message2);
       expect(resMessageUser2.status).toBe(201);
-      expect(resMessageUser2.body.data).toMatchObject({
-        chatId,
-        text: "Hello from User Two!",
-        senderId: userTwoId,
-        seen: false,
+      expect(resMessageUser2.body).toMatchObject({
+        message: "Message sent",
+        data: {
+          message: {
+            chatId,
+            text: "Hello from User Two!",
+            senderId: userTwoId,
+            seen: false,
+          },
+        },
       });
       const res = await request(app)
         .get(`${endpoint}/${chatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Messages retrieved successfully");
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.data[0]).toMatchObject({
-        _id: expect.any(String),
-        chatId,
-        senderId: userOneId,
-        text: "Hello from User One!",
-        seen: false,
-        createdAt: expect.any(String),
+      expect(res.body.data.messages).toHaveLength(2);
+      expect(res.body).toMatchObject({
+        message: "Messages retrieved",
+        data: {
+          messages: [
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userOneId,
+              text: "Hello from User One!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+            {
+              _id: expect.any(String),
+              chatId,
+              senderId: userTwoId,
+              text: "Hello from User Two!",
+              seen: false,
+              createdAt: expect.any(String),
+            },
+          ],
+        },
       });
     });
   });
@@ -599,8 +666,8 @@ describe("Message Routes", () => {
       expect(resOne.status).toBe(201);
       expect(resTwo.status).toBe(201);
 
-      userOneId = resOne.body.user._id;
-      userTwoId = resTwo.body.user._id;
+      userOneId = resOne.body.data.user._id;
+      userTwoId = resTwo.body.data.user._id;
 
       const loginData = { email: users[0].email, password: users[0].password };
       const loginRes = await request(app).post(loginEndpoint).send(loginData);
@@ -614,20 +681,20 @@ describe("Message Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      chatId = chatRes.body.data._id;
+      chatId = chatRes.body.data.chat._id;
 
       const messageRes = await request(app)
         .post("/api/v1/messages")
         .set("Cookie", cookies)
         .send({ chatId, text: "Hello, this is a test message!" });
       expect(messageRes.status).toBe(201);
-      messageId = messageRes.body.data._id;
+      messageId = messageRes.body.data.message._id;
     });
 
     it("should return `401` if user is not authenticated", async () => {
       const res = await request(app).delete(`${endpoint}/${messageId}`);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return `400` if `messageId` is not a valid Mongo ID", async () => {
@@ -636,7 +703,7 @@ describe("Message Routes", () => {
         .delete(`${endpoint}/${invalidMessageId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid Message ID");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_ID_INVALID);
     });
 
     it("should return `404` if message with given id does not exist", async () => {
@@ -645,7 +712,7 @@ describe("Message Routes", () => {
         .delete(`${endpoint}/${nonExistentMessageId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("Message Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_NOT_FOUND);
     });
 
     it("should return `403` if user is not the sender of the message", async () => {
@@ -658,7 +725,7 @@ describe("Message Routes", () => {
         .delete(`${endpoint}/${messageId}`)
         .set("Cookie", userTwoCookies);
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("You can only delete your own messages");
+      expect(res.body.error.code).toBe(ErrorCodes.MESSAGE_ACCESS_DENIED);
     });
 
     it("should return `200` and delete the message successfully", async () => {
@@ -666,12 +733,16 @@ describe("Message Routes", () => {
         .delete(`${endpoint}/${messageId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Message deleted successfully");
-      expect(res.body.data).toMatchObject({
-        _id: messageId,
-        chatId,
-        senderId: userOneId,
-        text: "Hello, this is a test message!",
+      expect(res.body).toMatchObject({
+        message: "Message deleted",
+        data: {
+          message: {
+            _id: messageId,
+            chatId,
+            senderId: userOneId,
+            text: "Hello, this is a test message!",
+          },
+        },
       });
     });
 
@@ -683,8 +754,8 @@ describe("Message Routes", () => {
         .get(`/api/v1/messages/${chatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(0);
-      expect(res.body.message).toBe("Messages retrieved successfully");
+      expect(res.body.message).toBe("Messages retrieved");
+      expect(res.body.data.messages).toHaveLength(0);
     });
   });
 });
