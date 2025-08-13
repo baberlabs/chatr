@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 import Chat from "../models/chat.model.js";
 import Message from "../models/message.model.js";
 import cloudinary from "../utils/cloudinary.js";
-import { messageResponse } from "./helpers/response.helpers.js";
+import { messageResponse } from "../utils/responses.js";
 import { createError, ErrorCodes } from "../errors.js";
+import { isValidImageFormat, isValidImageSize } from "../utils/validation.js";
 
 export const sendMessage = async (req, res) => {
   const senderId = req.user._id;
@@ -15,8 +16,7 @@ export const sendMessage = async (req, res) => {
 
   if (!chatId) throw createError(ErrorCodes.CHAT_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(chatId))
-    throw createError(ErrorCodes.CHAT_ID_INVALID);
+  if (!isValidObjectId(chatId)) throw createError(ErrorCodes.CHAT_ID_INVALID);
 
   const chat = await Chat.findById(chatId);
 
@@ -34,10 +34,9 @@ export const sendMessage = async (req, res) => {
   }
 
   if (image) {
-    const regex =
-      /^data:image\/(png|jpeg|jpg|webp|gif|bmp|x-icon|ico|avif);base64,/;
-    if (!regex.test(image)) throw createError(ErrorCodes.MESSAGE_IMAGE_INVALID);
-    if (image.size > 5 * 1024 * 1024)
+    if (!isValidImageFormat(image))
+      throw createError(ErrorCodes.MESSAGE_IMAGE_INVALID);
+    if (!isValidImageSize(image))
       throw createError(ErrorCodes.MESSAGE_IMAGE_TOO_BIG);
     try {
       const uploadResult = await cloudinary.uploader.upload(image, {
@@ -70,8 +69,7 @@ export const getMessagesByChatId = async (req, res) => {
 
   if (!chatId) throw createError(ErrorCodes.CHAT_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(chatId))
-    throw createError(ErrorCodes.CHAT_ID_INVALID);
+  if (!isValidObjectId(chatId)) throw createError(ErrorCodes.CHAT_ID_INVALID);
 
   const chat = await Chat.findById(chatId).lean();
 
@@ -96,7 +94,7 @@ export const deleteMessage = async (req, res) => {
 
   if (!messageId) throw createError(ErrorCodes.MESSAGE_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(messageId))
+  if (!isValidObjectId(messageId))
     throw createError(ErrorCodes.MESSAGE_ID_INVALID);
 
   const message = await Message.findById(messageId);
