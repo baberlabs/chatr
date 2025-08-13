@@ -1,13 +1,14 @@
 // Errors are caught with src/utils/catchAsync.js
 
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import bcrypt from "bcryptjs";
 
 import User from "../models/user.model.js";
 import cloudinary from "../utils/cloudinary.js";
-import { userResponse } from "./helpers/response.helpers.js";
-import { isValidEmail } from "../utils/helpers.js";
+import { userResponse } from "../utils/responses.js";
+import { isValidEmail } from "../utils/validation.js";
 import { createError, ErrorCodes } from "../errors.js";
+import { isValidImageFormat, isValidImageSize } from "../utils/validation.js";
 
 export const getAllUsers = async (req, res) => {
   const users = await User.find({ _id: { $ne: req.user._id } })
@@ -25,9 +26,7 @@ export const getUserById = async (req, res) => {
 
   if (!userId) createError(ErrorCodes.USER_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    throw createError(ErrorCodes.USER_ID_INVALID);
-  }
+  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
 
   const user = await User.findById(userId).select("-password").lean();
 
@@ -51,8 +50,7 @@ export const updateUserProfile = async (req, res) => {
 
   if (!userId) throw createError(ErrorCodes.USER_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(userId))
-    throw createError(ErrorCodes.USER_ID_INVALID);
+  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
 
   if (!fullName && !email && !password && !profilePic)
     throw createError(ErrorCodes.USER_UPDATE_FIELDS_REQUIRED);
@@ -86,13 +84,9 @@ export const updateUserProfile = async (req, res) => {
   }
 
   if (profilePic) {
-    const regex =
-      /^data:image\/(png|jpeg|jpg|webp|gif|bmp|x-icon|ico|avif);base64,/;
-    if (!regex.test(profilePic))
+    if (!isValidImageFormat(profilePic))
       throw createError(ErrorCodes.USER_UPDATE_IMAGE_INVALID);
-    const base64Size = Buffer.byteLength(profilePic, "base64");
-    const maxSize = 5 * 1024 * 1024; // 5 MB
-    if (base64Size > maxSize)
+    if (!isValidImageSize(profilePic))
       throw createError(ErrorCodes.USER_UPDATE_IMAGE_TOO_BIG);
     try {
       const uploadResult = await cloudinary.uploader.upload(profilePic, {
@@ -121,8 +115,7 @@ export const deleteUser = async (req, res) => {
 
   if (!userId) throw createError(ErrorCodes.USER_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(userId))
-    throw createError(ErrorCodes.USER_ID_INVALID);
+  if (!isValidObjectId(userId)) throw createError(ErrorCodes.USER_ID_INVALID);
 
   const user = await User.findById(userId);
 

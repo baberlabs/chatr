@@ -4,8 +4,8 @@ import bcrypt from "bcryptjs";
 
 import User from "../models/user.model.js";
 import { generateJWT } from "../utils/generateJWT.js";
-import { userResponse } from "./helpers/response.helpers.js";
-import { isValidEmail } from "../utils/helpers.js";
+import { userResponse } from "../utils/responses.js";
+import { isValidEmail } from "../utils/validation.js";
 import { ErrorCodes, createError } from "../errors.js";
 
 export const registerUser = async (req, res) => {

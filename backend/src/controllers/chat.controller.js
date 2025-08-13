@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 import Chat from "../models/chat.model.js";
 import User from "../models/user.model.js";
-import { chatResponse } from "./helpers/response.helpers.js";
+import { chatResponse } from "../utils/responses.js";
 import { createError, ErrorCodes } from "../errors.js";
 
 export const getAllChats = async (req, res) => {
@@ -26,7 +26,7 @@ export const createChat = async (req, res) => {
 
   if (!receiverId) throw createError(ErrorCodes.USER_ID_REQUIRED);
 
-  if (!mongoose.Types.ObjectId.isValid(receiverId))
+  if (!isValidObjectId(receiverId))
     throw createError(ErrorCodes.USER_ID_INVALID);
 
   const receiver = await User.findById(receiverId).lean();
@@ -61,8 +61,7 @@ export const getChatById = async (req, res) => {
   const userId = req.user._id;
   const chatId = req.params.chatId;
 
-  if (!mongoose.Types.ObjectId.isValid(chatId))
-    throw createError(ErrorCodes.CHAT_ID_INVALID);
+  if (!isValidObjectId(chatId)) throw createError(ErrorCodes.CHAT_ID_INVALID);
 
   const chat = await Chat.findById(chatId).lean();
 
