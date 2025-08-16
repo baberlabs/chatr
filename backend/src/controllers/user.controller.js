@@ -33,6 +33,6 @@ export const updateUserProfile = async (req, res) => {
 export const deleteUser = async (req, res) => {
   const authUserId = req.user._id;
   const userId = req.params.id;
-  const deletedUser = await UserService.deleteUser(authUserId, userId);
-  res.status(200).json({ user: userResponse(deletedUser) });
+  await UserService.deleteUser(authUserId, userId);
+  res.sendStatus(204);
 };
