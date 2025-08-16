@@ -1,4 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+dotenv.config();
 
 if (
   process.env.CLOUDINARY_CLOUD_NAME &&
@@ -10,6 +12,9 @@ if (
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
+  console.log("Cloudinary configured");
+} else {
+  console.error("Cloudinary configuration failed");
 }
 
 export default cloudinary;

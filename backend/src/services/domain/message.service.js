@@ -6,17 +6,18 @@ import {
 } from "../infrastructure/index.js";
 
 export class MessageService {
-  static async createMessage(chatId, senderId, content) {
-    const text = content.text?.trim();
-    const image = content.image?.trim();
+  static async createMessage(chatId, senderId, text, image) {
+    // "n" stands for "normalised"
+    const nText = text?.trim();
+    const nImage = image?.trim();
     const msgData = { chatId, senderId };
 
     ValidationService.validateChatIds(chatId, senderId);
     await PermissionService.getChatIfAuthorised(senderId, chatId);
-    ValidationService.validateMessage(text, image);
+    ValidationService.validateMessage(nText, nImage);
 
-    if (text) msgData.text = text;
-    if (image) msgData.image = await UploadService.uploadMessageImage(image);
+    if (nText) msgData.text = nText;
+    if (nImage) msgData.image = await UploadService.uploadMessageImage(nImage);
 
     const newMessage = new Message(msgData);
     return await newMessage.save();

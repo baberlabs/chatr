@@ -51,7 +51,7 @@ export const useChatStore = create((set, get) => ({
     }
 
     set({ selectedUser: user });
-    get().createChat(user._id);
+    get().getChat(user._id);
   },
 
   setSelectedChatId: (chatId) => set({ selectedChatId: chatId }),
@@ -73,7 +73,7 @@ export const useChatStore = create((set, get) => ({
     set({ isChatsLoading: true });
     try {
       const response = await api.get("/chats");
-      set({ chats: response.data.data });
+      set({ chats: response.data.chats });
     } catch (error) {
       console.error("Error fetching chats:", error);
       set({ chats: [] });
@@ -82,10 +82,32 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  getChat: async (receiverId) => {
+    try {
+      const chat = get().chats.find((chat) =>
+        chat.participants.some((id) => id === receiverId)
+      );
+      const chatId = chat._id;
+      await api.get(`/chats/${chatId}`);
+      set({ selectedChatId: chatId });
+      await get().getChatMessagesById(chatId);
+      const roomId = `chat-${chatId}`;
+      const { socket } = useAuthStore.getState();
+      if (socket) {
+        socket.emit("joinRoom", {
+          roomId,
+          receiverId,
+        });
+      }
+    } catch (error) {
+      await get().createChat(receiverId);
+    }
+  },
+
   createChat: async (receiverId) => {
     try {
       const response = await api.post("/chats", { receiverId });
-      const chatId = response.data.data._id;
+      const chatId = response.data.chat._id;
       set({ selectedChatId: chatId });
       await get().getChatMessagesById(chatId);
       const roomId = `chat-${chatId}`;
@@ -105,7 +127,7 @@ export const useChatStore = create((set, get) => ({
   getChatMessagesById: async (chatId) => {
     try {
       const response = await api.get(`/messages/${chatId}`);
-      set({ currentChatMessages: response.data.data });
+      set({ currentChatMessages: response.data.messages });
     } catch (error) {
       console.error("Error fetching chat messages by ID:", error);
       set({ currentChatMessages: [] });
@@ -117,7 +139,7 @@ export const useChatStore = create((set, get) => ({
     try {
       if (message.text.trim() === "" && message.image.trim() === "") return;
       const response = await api.post(`/messages`, message);
-      const newMessage = response.data.data;
+      const newMessage = response.data.message;
       const { socket } = useAuthStore.getState();
       const selectedUser = get().selectedUser;
       if (socket) {

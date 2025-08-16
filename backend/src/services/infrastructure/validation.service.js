@@ -4,6 +4,9 @@ import { createError as err, ErrorCodes as Code } from "../../errors.js";
 const IMG_DATA_URL =
   /^data:image\/(png|jpe?g|webp|gif|bmp|ico|avif)(;charset=[^;]+)?;base64,/i;
 
+// const IMG_DATA_URL =
+//   /^data:image\/(png|jpeg|jpg|webp|gif|bmp|x-icon|ico|avif);base64,/;
+
 export const LIMITS = {
   name: { min: 3, max: 50 },
   password: { min: 8 },
