@@ -3,7 +3,7 @@
  * themselves, hence, no try-catch is needed here.
  */
 
-import { UserService } from "../services/user.service.js";
+import { UserService } from "../services/domain/user.service.js";
 import { userResponse } from "../utils/responses.js";
 
 export const getAllUsers = async (req, res) => {
