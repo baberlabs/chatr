@@ -9,6 +9,7 @@ import { userResponse } from "../utils/responses.js";
 export const getAllUsers = async (req, res) => {
   const userId = req.user._id;
   const users = await UserService.getAllUsersExcept(userId);
+  console.log(users);
   res.status(200).json({ users: users.map(userResponse) });
 };
 
@@ -21,7 +22,7 @@ export const getUserById = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   const authUserId = req.user._id;
   const userId = req.params.id;
-  const updateData = ({ fullName, email, password, profilePic } = req.body);
+  const updateData = req.body;
   const updatedUser = await UserService.updateUserProfile(
     authUserId,
     userId,
