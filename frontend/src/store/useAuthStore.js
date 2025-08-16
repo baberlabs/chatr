@@ -4,8 +4,9 @@ import { io } from "socket.io-client";
 import { api } from "@/lib/api";
 import { useChatStore } from "@/store/useChatStore";
 
-const SOCKET_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const devMode = import.meta.env.MODE === "development";
+const SOCKET_URL = devMode ? "http://localhost:5001" : "/";
+const LOCAL_AUTH_USER = devMode ? "chatr-dev-authUser" : "chatr-prod-authUser";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -15,8 +16,6 @@ export const useAuthStore = create((set, get) => ({
   isUpdatingProfile: false,
   socket: null,
   onlineUsers: [],
-
-  // Errors
   isError: false,
   error: null,
 
@@ -29,12 +28,28 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
     try {
-      const response = await api.get("/auth/status");
-      set({ authUser: response.data.user });
-      get().connectSocket();
-    } catch (error) {
-      console.error("Authentication check failed:", error);
+      const storedUser = localStorage.getItem(LOCAL_AUTH_USER);
+
+      if (storedUser) {
+        set({ authUser: JSON.parse(storedUser) });
+        get().connectSocket();
+
+        try {
+          await api.get("/auth/status");
+        } catch (error) {
+          set({ authUser: null });
+          localStorage.removeItem(LOCAL_AUTH_USER);
+          get().disconnectSocket();
+        }
+
+        return;
+      }
+
       set({ authUser: null });
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      set({ authUser: null });
+      localStorage.removeItem(LOCAL_AUTH_USER);
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -44,13 +59,16 @@ export const useAuthStore = create((set, get) => ({
     set({ isRegistering: true });
     try {
       const response = await api.post("/auth/register", userData);
-      set({ authUser: response.data.user });
+      const user = response.data.user;
+      localStorage.setItem(LOCAL_AUTH_USER, JSON.stringify(user));
+      set({ authUser: user });
       get().connectSocket();
     } catch (error) {
       console.error("Registration error:", error);
       set({
         isError: true,
         error: error.response?.data?.message || "Registration failed",
+        authUser: null,
       });
       setTimeout(() => {
         set({
@@ -67,13 +85,16 @@ export const useAuthStore = create((set, get) => ({
     get().resetErrors();
     try {
       const response = await api.post("/auth/login", credentials);
-      set({ authUser: response.data.user });
+      const user = response.data.user;
+      localStorage.setItem(LOCAL_AUTH_USER, JSON.stringify(user));
+      set({ authUser: user });
       get().connectSocket();
     } catch (error) {
       console.error("Login error:", error);
       set({
         isError: true,
         error: error.response?.data?.message || "Login failed",
+        authUser: null,
       });
       setTimeout(() => {
         set({
@@ -89,6 +110,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       await api.post("/auth/logout");
       set({ authUser: null });
+      localStorage.removeItem(LOCAL_AUTH_USER);
       const { socket } = get();
       const selectedChatId = useChatStore.getState().selectedChatId;
       if (socket) {
@@ -113,7 +135,9 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: response.data.user });
       return response.data.user;
     } catch (error) {
-      set({ error: error.response?.data?.message || "Profile update failed" });
+      set({
+        error: error.response?.data?.message || "Profile update failed",
+      });
       setTimeout(() => {
         set({ error: null });
       }, 5000);

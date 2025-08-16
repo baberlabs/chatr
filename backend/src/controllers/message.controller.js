@@ -8,13 +8,16 @@ import { MessageService } from "../services/domain/message.service.js";
 import { messageResponse } from "../utils/responses.js";
 
 export const sendMessage = async (req, res) => {
-  const chatId = req.body.chatId;
   const senderId = req.user._id;
-  const content = ({ text, image } = req.body);
+  const chatId = req.body.chatId;
+  const text = req.body.text;
+  const image = req.body.image;
+
   const newMessage = await MessageService.createMessage(
     chatId,
     senderId,
-    content
+    text,
+    image
   );
   await ChatService.updateLatestMessage(chatId);
   res.status(201).json({ message: messageResponse(newMessage) });
