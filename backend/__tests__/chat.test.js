@@ -13,6 +13,7 @@ import {
 } from "@jest/globals";
 
 import app from "../src/app.js";
+import { ErrorCodes } from "../src/errors.js";
 
 let mongo;
 
@@ -58,8 +59,8 @@ describe("Chat Routes", () => {
     const resTwo = await request(app).post(regEndpoint).send(users[1]);
     expect(resOne.status).toBe(201);
     expect(resTwo.status).toBe(201);
-    userOneId = resOne.body.user._id;
-    userTwoId = resTwo.body.user._id;
+    userOneId = resOne.body.data.user._id;
+    userTwoId = resTwo.body.data.user._id;
     const resLogin = await request(app)
       .post(loginEndpoint)
       .send({ email: users[0].email, password: users[0].password });
@@ -73,14 +74,16 @@ describe("Chat Routes", () => {
     it("should return `401` if user is not authenticated", async () => {
       const res = await request(app).get(endpoint);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
     it("should return `200` and an empty array if no chats exist", async () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "No chats found",
-        data: [],
+        message: "Chats retrieved",
+        data: {
+          chats: [],
+        },
       });
     });
     it("should return `200` and an array of chats if chats exist", async () => {
@@ -89,20 +92,22 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      const chatId = chatRes.body.data._id;
+      const chatId = chatRes.body.data.chat._id;
       const res = await request(app).get(endpoint).set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "Chats retrieved successfully",
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            _id: chatId,
-            isGroup: false,
-            participants: expect.arrayContaining([userOneId, userTwoId]),
-            chatName: null,
-            groupAdmin: null,
-          }),
-        ]),
+        message: "Chats retrieved",
+        data: {
+          chats: expect.arrayContaining([
+            expect.objectContaining({
+              _id: chatId,
+              isGroup: false,
+              participants: expect.arrayContaining([userOneId, userTwoId]),
+              chatName: null,
+              groupAdmin: null,
+            }),
+          ]),
+        },
       });
     });
   });
@@ -115,7 +120,7 @@ describe("Chat Routes", () => {
         .post(endpoint)
         .send({ receiverId: userTwoId });
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return `400` if `receiverId` is missing", async () => {
@@ -124,7 +129,7 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({});
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Missing User ID");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ID_REQUIRED);
     });
 
     it("should return `400` if `receiverId` is invalid", async () => {
@@ -133,7 +138,7 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: "invalid-receiver-id" });
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid User ID");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_ID_INVALID);
     });
 
     it("should return `404` if receiver user does not exist", async () => {
@@ -143,7 +148,7 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: nonExistentId });
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("User Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.USER_NOT_FOUND);
     });
 
     it("should return `201` if a new one-on-one chat is created", async () => {
@@ -153,51 +158,34 @@ describe("Chat Routes", () => {
         .send({ receiverId: userTwoId });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Chat created successfully",
+        message: "Chat created",
         data: {
-          _id: expect.any(String),
-          isGroup: false,
-          participants: expect.arrayContaining([userOneId, userTwoId]),
-          chatName: null,
-          groupAdmin: null,
-          latestMessage: null,
-          createdAt: expect.any(String),
-          updatedAt: expect.any(String),
+          chat: {
+            _id: expect.any(String),
+            isGroup: false,
+            participants: expect.arrayContaining([userOneId, userTwoId]),
+            chatName: null,
+            groupAdmin: null,
+            latestMessage: null,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+          },
         },
       });
     });
 
-    it("should return `200` if an existing one-on-one chat is reused", async () => {
+    it("should return `409` if chat already exists", async () => {
       const res = await request(app)
         .post(endpoint)
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(res.status).toBe(201);
-      expect(res.body).toMatchObject({
-        message: "Chat created successfully",
-        data: {
-          _id: expect.any(String),
-          isGroup: false,
-          participants: expect.arrayContaining([userOneId, userTwoId]),
-          chatName: null,
-          groupAdmin: null,
-        },
-      });
       const res2 = await request(app)
         .post(endpoint)
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
-      expect(res2.status).toBe(200);
-      expect(res2.body).toMatchObject({
-        message: "Chat already exists",
-        data: {
-          _id: res.body.data._id,
-          isGroup: false,
-          participants: expect.arrayContaining([userOneId, userTwoId]),
-          chatName: null,
-          groupAdmin: null,
-        },
-      });
+      expect(res2.status).toBe(409);
+      expect(res2.body.error.code).toBe(ErrorCodes.CHAT_ALREADY_EXISTS);
     });
   });
 
@@ -212,13 +200,13 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      chatId = chatRes.body.data._id;
+      chatId = chatRes.body.data.chat._id;
     });
 
     it("should return `401` is user is not authenticated", async () => {
       const res = await request(app).get(`${endpointBase}/${chatId}`);
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe("Unauthorised - No Token");
+      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
 
     it("should return `400` if `chatId` is invalid", async () => {
@@ -226,7 +214,7 @@ describe("Chat Routes", () => {
         .get(`${endpointBase}/invalid-chat-id`)
         .set("Cookie", cookies);
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Invalid Chat ID");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ID_INVALID);
     });
 
     it("should return `404` if `chatId` does not exist", async () => {
@@ -235,7 +223,7 @@ describe("Chat Routes", () => {
         .get(`${endpointBase}/${nonExistentChatId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe("Chat Not Found");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_NOT_FOUND);
     });
 
     it("should return `403` if user is not a participant in the chat", async () => {
@@ -255,7 +243,7 @@ describe("Chat Routes", () => {
         .get(`${endpointBase}/${chatId}`)
         .set("Cookie", userThreeCookies);
       expect(res.status).toBe(403);
-      expect(res.body.message).toBe("You are not a participant of this chat");
+      expect(res.body.error.code).toBe(ErrorCodes.CHAT_ACCESS_DENIED);
     });
 
     it("should return `200` and return chat data if user is a participant", async () => {
@@ -264,13 +252,15 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "Chat retrieved successfully",
+        message: "Chat retrieved",
         data: {
-          _id: chatId,
-          isGroup: false,
-          participants: expect.arrayContaining([userOneId, userTwoId]),
-          chatName: null,
-          groupAdmin: null,
+          chat: {
+            _id: chatId,
+            isGroup: false,
+            participants: expect.arrayContaining([userOneId, userTwoId]),
+            chatName: null,
+            groupAdmin: null,
+          },
         },
       });
     });

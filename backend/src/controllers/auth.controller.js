@@ -1,50 +1,57 @@
+/**
+ * Errors are caught with catchAsync on the routes
+ * themselves, hence, no try-catch is needed here.
+ */
+
+import { AuthService } from "../services/domain/auth.service.js";
+import { userResponse } from "../utils/responses.js";
 import { generateJWT } from "../utils/generateJWT.js";
-import {
-  createUser,
-  loginWithEmailAndPassword,
-} from "./helpers/user.helpers.js";
-import { userResponse } from "./helpers/response.helpers.js";
 
 export const registerUser = async (req, res) => {
-  let { fullName, email, password } = req.body;
-  fullName = fullName?.trim();
-  email = email?.trim().toLowerCase();
-  password = password?.trim();
+  const { fullName, email, password } = req.body;
 
-  const user = await createUser(fullName, email, password);
+  const user = await AuthService.registerUser(fullName, email, password);
+
   generateJWT(user._id, res);
+
   res.status(201).json({
-    message: "User registered successfully",
-    user: userResponse(user),
+    message: "User registered",
+    data: {
+      user: userResponse(user),
+    },
   });
 };
 
 export const loginUser = async (req, res) => {
-  let { email, password } = req.body;
-  email = email?.trim().toLowerCase();
-  password = password?.trim();
+  const { email, password } = req.body;
 
-  const user = await loginWithEmailAndPassword(email, password);
+  const user = await AuthService.loginUser(email, password);
+
   generateJWT(user._id, res);
+
   res.status(200).json({
-    message: "User logged in successfully",
-    user: userResponse(user),
+    message: "User logged in",
+    data: {
+      user: userResponse(user),
+    },
   });
 };
 
 export const logoutUser = (req, res) => {
-  res.cookie("jwt", "", {
-    maxAge: 0,
+  res.clearCookie("jwt", {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
+    path: "/",
   });
-  res.status(200).json({ message: "User logged out successfully" });
+  res.status(200).json({ message: "User logged out" });
 };
 
 export const checkAuthStatus = (req, res) => {
   res.status(200).json({
-    message: "Authorised - Valid Token",
-    user: req.user,
+    message: "User authenticated",
+    data: {
+      user: userResponse(req.user),
+    },
   });
 };

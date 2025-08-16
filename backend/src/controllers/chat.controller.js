@@ -1,49 +1,50 @@
-import { validateObjectId } from "./helpers/validation.helpers.js";
-import {
-  getChatsByUserId,
-  findChatByChatId,
-  verifyUserIsChatParticipant,
-  respondWithChats,
-  findExistingChat,
-  respondWithChat,
-  createNewChat,
-} from "./helpers/chat.helpers.js";
-import {
-  ensureReceiverIdIsPresent,
-  verifyUserExists,
-} from "./helpers/user.helpers.js";
+/**
+ * Errors are caught with catchAsync on the routes
+ * themselves, hence, no try-catch is needed here.
+ */
+
+import { ChatService } from "../services/domain/chat.service.js";
+import { chatResponse } from "../utils/responses.js";
 
 export const getAllChats = async (req, res) => {
   const userId = req.user._id;
-  validateObjectId(userId, "User");
-  const chats = await getChatsByUserId(userId);
-  respondWithChats(res, chats);
+
+  const chats = await ChatService.getAllChats(userId);
+
+  res.status(200).json({
+    message: "Chats retrieved",
+    data: {
+      chats: chats.map(chatResponse),
+    },
+  });
 };
 
 export const createChat = async (req, res) => {
-  const { receiverId } = req.body;
   const senderId = req.user._id;
-  ensureReceiverIdIsPresent(receiverId);
-  validateObjectId(senderId, "User");
-  validateObjectId(receiverId, "User");
-  await verifyUserExists(receiverId);
-  const existingChat = await findExistingChat(senderId, receiverId);
-  if (existingChat) {
-    respondWithChat(res, existingChat, "Chat already exists", 200);
-    return;
-  }
-  const newChat = await createNewChat(senderId, receiverId);
-  respondWithChat(res, newChat, "Chat created successfully", 201);
+  const receiverId = req.body.receiverId;
+
+  const chat = await ChatService.createDirectChat(senderId, receiverId);
+
+  res.status(201).json({
+    message: "Chat created",
+    data: {
+      chat: chatResponse(chat),
+    },
+  });
 };
 
 export const getChatById = async (req, res) => {
-  const { chatId } = req.params;
   const userId = req.user._id;
-  validateObjectId(userId, "User");
-  validateObjectId(chatId, "Chat");
-  const chat = await findChatByChatId(chatId);
-  verifyUserIsChatParticipant(chat, userId);
-  respondWithChat(res, chat, "Chat retrieved successfully", 200);
+  const chatId = req.params.chatId;
+
+  const chat = await ChatService.getChatById(chatId, userId);
+
+  res.status(200).json({
+    message: "Chat retrieved",
+    data: {
+      chat: chatResponse(chat),
+    },
+  });
 };
 
 export const deleteChat = () => {};
