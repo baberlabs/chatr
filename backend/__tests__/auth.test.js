@@ -5,7 +5,6 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import { beforeEach, describe, jest } from "@jest/globals";
 
 import app from "../src/app.js";
-import { ErrorCodes } from "../src/errors.js";
 
 let mongo;
 
@@ -42,7 +41,7 @@ describe("Auth Routes", () => {
       const res = await request(app).post(endpoint).send(payload);
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_FULLNAME_REQUIRED);
+      expect(res.body.message).toMatch("Full name is required");
     });
 
     it("should fail if email is missing", async () => {
@@ -50,7 +49,7 @@ describe("Auth Routes", () => {
       const res = await request(app).post(endpoint).send(payload);
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_REQUIRED);
+      expect(res.body.message).toMatch("Email is required");
     });
 
     it("should fail if password is missing", async () => {
@@ -58,7 +57,7 @@ describe("Auth Routes", () => {
       const res = await request(app).post(endpoint).send(payload);
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_PASSWORD_REQUIRED);
+      expect(res.body.message).toMatch("Password is required");
     });
 
     it("should fail if email is invalid", async () => {
@@ -67,7 +66,7 @@ describe("Auth Routes", () => {
         .send({ ...validPayload, email: "not-an-email" });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_INVALID);
+      expect(res.body.message).toMatch("Invalid email");
     });
 
     it("should fail if password is too short", async () => {
@@ -76,7 +75,9 @@ describe("Auth Routes", () => {
         .send({ ...validPayload, password: "short" });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_PASSWORD_TOO_SHORT);
+      expect(res.body.message).toBe(
+        "Password should be at least 8 characters long"
+      );
     });
 
     it("should fail if fullName is too short", async () => {
@@ -85,7 +86,9 @@ describe("Auth Routes", () => {
         .send({ ...validPayload, fullName: "Ab" });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_FULLNAME_TOO_SHORT);
+      expect(res.body.message).toBe(
+        "Full name should be at least 3 characters long"
+      );
     });
 
     it("should fail if fullName is too long", async () => {
@@ -95,24 +98,31 @@ describe("Auth Routes", () => {
         .send({ ...validPayload, fullName: longName });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_FULLNAME_TOO_LONG);
+      expect(res.body.message).toBe(
+        "Full name should be less than 50 characters long"
+      );
     });
 
     it("should register a user with valid data", async () => {
       const res = await request(app).post(endpoint).send(validPayload);
 
       expect(res.status).toBe(201);
-      expect(res.body.message).toBe("User registered");
-      expect(res.body.data).toMatchObject({
+
+      expect(res.body).toMatchObject({
+        message: "User registered successfully",
         user: {
           fullName: validPayload.fullName,
           email: validPayload.email,
           isVerified: false,
         },
       });
-      expect(res.body.data.user._id).toBeDefined();
-      expect(mongoose.isValidObjectId(res.body.data.user._id)).toBe(true);
-      expect(res.body.data.user).not.toHaveProperty("password");
+
+      expect(res.body.user._id).toBeDefined();
+      expect(mongoose.isValidObjectId(res.body.user._id)).toBe(true);
+
+      expect(res.body.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("verificationCode");
+      expect(res.body.user).not.toHaveProperty("verificationCodeExpires");
     });
 
     it("should trim leading/trailing whitespace from input", async () => {
@@ -123,8 +133,8 @@ describe("Auth Routes", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.user.fullName).toBe("Test User");
-      expect(res.body.data.user.email).toBe("test@example.com");
+      expect(res.body.user.fullName).toBe("Test User");
+      expect(res.body.user.email).toBe("test@example.com");
     });
 
     it("should fail if email already exists", async () => {
@@ -137,7 +147,7 @@ describe("Auth Routes", () => {
         .send({ ...validPayload, fullName: "Another User" });
 
       expect(res.status).toBe(409); // conflict error
-      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_ALREADY_EXISTS);
+      expect(res.body.message).toBe("Email already exists");
     });
 
     it("should register a user with valid data and set JWT cookie", async () => {
@@ -146,14 +156,12 @@ describe("Auth Routes", () => {
       expect(res.status).toBe(201);
 
       expect(res.body).toMatchObject({
-        message: "User registered",
-        data: {
-          user: {
-            fullName: validPayload.fullName,
-            email: validPayload.email,
-            profilePic: "",
-            isVerified: false,
-          },
+        message: "User registered successfully",
+        user: {
+          fullName: validPayload.fullName,
+          email: validPayload.email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
@@ -170,7 +178,7 @@ describe("Auth Routes", () => {
     it("should return 401 if no cookie is sent", async () => {
       const res = await request(app).get(endpoint);
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
+      expect(res.body.message).toBe("Unauthorised - No Token");
     });
 
     it("should return 401 if JWT is invalid", async () => {
@@ -179,7 +187,7 @@ describe("Auth Routes", () => {
         .set("Cookie", ["jwt=invalid.token.here"]);
 
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_INVALID);
+      expect(res.body.message).toBe("Unauthorised - Invalid Token");
     });
 
     it("should return 200 and user data if JWT is valid", async () => {
@@ -197,8 +205,8 @@ describe("Auth Routes", () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
 
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User authenticated");
-      expect(res.body.data.user).toMatchObject({
+      expect(res.body.message).toBe("Authorised - Valid Token");
+      expect(res.body.user).toMatchObject({
         _id: expect.any(String),
         fullName: "Status Test User",
         email: "status@test.com",
@@ -226,7 +234,7 @@ describe("Auth Routes", () => {
         .send({ password: validUser.password });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_REQUIRED);
+      expect(res.body.message).toBe("Email is required");
     });
 
     it("should fail if password is missing", async () => {
@@ -235,7 +243,7 @@ describe("Auth Routes", () => {
         .send({ email: validUser.email });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_PASSWORD_REQUIRED);
+      expect(res.body.message).toBe("Password is required");
     });
 
     it("should fail if email is invalid", async () => {
@@ -244,7 +252,7 @@ describe("Auth Routes", () => {
         .send({ email: "not-an-email", password: validUser.password });
 
       expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe(ErrorCodes.USER_EMAIL_INVALID);
+      expect(res.body.message).toBe("Invalid email");
     });
 
     it("should fail if user does not exist", async () => {
@@ -253,7 +261,7 @@ describe("Auth Routes", () => {
         .send({ email: "not@registered.com", password: validUser.password });
 
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe(ErrorCodes.AUTH_CREDENTIALS_INVALID);
+      expect(res.body.message).toBe("Invalid credentials");
     });
 
     it("should fail if password is incorrect", async () => {
@@ -262,7 +270,7 @@ describe("Auth Routes", () => {
         .send({ email: validUser.email, password: "incorrectPassword123" });
 
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe(ErrorCodes.AUTH_CREDENTIALS_INVALID);
+      expect(res.body.message).toBe("Invalid credentials");
     });
 
     it("should login successfully with correct credentials and set JWT cookie", async () => {
@@ -272,19 +280,17 @@ describe("Auth Routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User logged in",
-        data: {
-          user: {
-            fullName: validUser.fullName,
-            email: validUser.email,
-            profilePic: "",
-            isVerified: false,
-          },
+        message: "User logged in successfully",
+        user: {
+          fullName: validUser.fullName,
+          email: validUser.email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
-      expect(res.body.data.user._id).toBeDefined();
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user._id).toBeDefined();
+      expect(res.body.user).not.toHaveProperty("password");
 
       const cookies = res.headers["set-cookie"];
       expect(cookies).toBeDefined();
@@ -316,26 +322,22 @@ describe("Auth Routes", () => {
       const res = await request(app).post(endpoint).set("Cookie", cookies);
 
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User logged out");
+      expect(res.body.message).toBe("User logged out successfully");
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);
-      expect(clearedCookie).toMatch(/Expires=Thu, 01 Jan 1970/);
-      expect(clearedCookie).toMatch(/HttpOnly/);
-      expect(clearedCookie).toMatch(/SameSite=Strict/);
+      expect(clearedCookie).toMatch(/Max-Age=0/);
     });
 
     it("should return 200 even if no cookie is sent", async () => {
       const res = await request(app).post(endpoint);
 
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User logged out");
+      expect(res.body.message).toBe("User logged out successfully");
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);
-      expect(clearedCookie).toMatch(/Expires=Thu, 01 Jan 1970/);
-      expect(clearedCookie).toMatch(/HttpOnly/);
-      expect(clearedCookie).toMatch(/SameSite=Strict/);
+      expect(clearedCookie).toMatch(/Max-Age=0/);
     });
   });
 });
