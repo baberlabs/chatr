@@ -348,10 +348,8 @@ describe("User Routes", () => {
         },
       });
 
-      expect(res.body.user).not.toHaveProperty("password");
-
       const resLogout = await request(app).post("/api/v1/auth/logout");
-      expect(resLogout.status).toBe(200);
+      expect(resLogout.status).toBe(204);
 
       const resLoginOldPassword = await request(app)
         .post("/api/v1/auth/login")
@@ -565,14 +563,7 @@ describe("User Routes", () => {
       const res = await request(app)
         .delete(`${endpointBase}/${userOneId}`)
         .set("Cookie", cookies);
-      expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: userOneId,
-        fullName: users[0].fullName,
-        email: users[0].email,
-        profilePic: "",
-        isVerified: false,
-      });
+      expect(res.status).toBe(204);
 
       // should not allow login after account deletion
       const fetchRes = await request(app)

@@ -191,13 +191,7 @@ describe("Auth Routes", () => {
       expect(cookies).toBeDefined();
 
       const res = await request(app).get(endpoint).set("Cookie", cookies);
-      expect(res.status).toBe(200);
-      expect(res.body.user).toMatchObject({
-        _id: expect.any(String),
-        fullName: "Status Test User",
-        email: "status@test.com",
-        isVerified: false,
-      });
+      expect(res.status).toBe(204);
     });
   });
 
@@ -306,8 +300,7 @@ describe("Auth Routes", () => {
     it("should clear the JWT cookie on logout", async () => {
       const res = await request(app).post(endpoint).set("Cookie", cookies);
 
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User logged out");
+      expect(res.status).toBe(204);
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);
@@ -319,8 +312,7 @@ describe("Auth Routes", () => {
     it("should return 200 even if no cookie is sent", async () => {
       const res = await request(app).post(endpoint);
 
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User logged out");
+      expect(res.status).toBe(204);
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);

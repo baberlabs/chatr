@@ -28,9 +28,7 @@ export const logoutUser = (req, res) => {
     secure: process.env.NODE_ENV === "production",
     path: "/",
   });
-  res.status(200).json({ message: "User logged out" });
+  res.sendStatus(204);
 };
 
-export const checkAuthStatus = (req, res) => {
-  res.status(200).json({ user: userResponse(req.user) });
-};
+export const checkAuthStatus = (req, res) => res.sendStatus(204);

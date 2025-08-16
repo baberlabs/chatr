@@ -133,7 +133,7 @@ describe("Message Routes", () => {
 
     it("should return `403` if user is not a participant in the chat", async () => {
       const resLogout = await request(app).post("/api/v1/auth/logout");
-      expect(resLogout.status).toBe(200);
+      expect(resLogout.status).toBe(204);
 
       const userThree = {
         fullName: "User Three",
