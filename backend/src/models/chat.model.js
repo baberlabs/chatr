@@ -16,12 +16,10 @@ const chatSchema = new mongoose.Schema(
     chatName: {
       type: String,
       trim: true,
-      default: null,
     },
     groupAdmin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
     },
     latestMessage: {
       type: Object,
