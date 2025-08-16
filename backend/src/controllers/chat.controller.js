@@ -3,7 +3,7 @@
  * themselves, hence, no try-catch is needed here.
  */
 
-import { ChatService } from "../services/chat.service.js";
+import { ChatService } from "../services/domain/chat.service.js";
 import { chatResponse } from "../utils/responses.js";
 
 export const getAllChats = async (req, res) => {

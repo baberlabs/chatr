@@ -16,6 +16,7 @@ import {
 import app from "../src/app.js";
 import cloudinary from "../src/utils/cloudinary.js";
 import { ErrorCodes } from "../src/errors.js";
+import { LIMITS } from "../src/services/infrastructure/validation.service.js";
 
 let mongo;
 
@@ -131,6 +132,9 @@ describe("Message Routes", () => {
     });
 
     it("should return `403` if user is not a participant in the chat", async () => {
+      const resLogout = await request(app).post("/api/v1/auth/logout");
+      expect(resLogout.status).toBe(200);
+
       const userThree = {
         fullName: "User Three",
         email: "userthree@email.com",
@@ -140,12 +144,15 @@ describe("Message Routes", () => {
         .post("/api/v1/auth/register")
         .send(userThree);
       expect(resThree.status).toBe(201);
+
       const resLogin = await request(app)
         .post("/api/v1/auth/login")
         .send({ email: userThree.email, password: userThree.password });
       expect(resLogin.status).toBe(200);
+
       const userThreeCookies = resLogin.headers["set-cookie"];
       expect(userThree).toBeDefined();
+
       const res = await request(app)
         .post(endpoint)
         .set("Cookie", userThreeCookies)
@@ -278,6 +285,7 @@ describe("Message Routes", () => {
       expect(cloudinary.uploader.upload).toHaveBeenCalledWith(base64Image, {
         resource_type: "image",
         folder: "chat_images",
+        max_file_size: LIMITS.imageBytes,
       });
     });
 

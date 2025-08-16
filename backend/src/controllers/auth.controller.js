@@ -3,7 +3,7 @@
  * themselves, hence, no try-catch is needed here.
  */
 
-import { AuthService } from "../services/auth.service.js";
+import { AuthService } from "../services/domain/auth.service.js";
 import { userResponse } from "../utils/responses.js";
 import { generateJWT } from "../utils/generateJWT.js";
 

@@ -320,7 +320,9 @@ describe("Auth Routes", () => {
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);
-      expect(clearedCookie).toMatch(/Max-Age=0/);
+      expect(clearedCookie).toMatch(/Expires=Thu, 01 Jan 1970/);
+      expect(clearedCookie).toMatch(/HttpOnly/);
+      expect(clearedCookie).toMatch(/SameSite=Strict/);
     });
 
     it("should return 200 even if no cookie is sent", async () => {
@@ -331,7 +333,9 @@ describe("Auth Routes", () => {
 
       const clearedCookie = res.headers["set-cookie"][0];
       expect(clearedCookie).toMatch(/jwt=;/);
-      expect(clearedCookie).toMatch(/Max-Age=0/);
+      expect(clearedCookie).toMatch(/Expires=Thu, 01 Jan 1970/);
+      expect(clearedCookie).toMatch(/HttpOnly/);
+      expect(clearedCookie).toMatch(/SameSite=Strict/);
     });
   });
 });
