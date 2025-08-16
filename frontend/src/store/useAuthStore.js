@@ -132,7 +132,9 @@ export const useAuthStore = create((set, get) => ({
     set({ isUpdatingProfile: true });
     try {
       const response = await api.put(`/users/${userId}`, profileData);
-      set({ authUser: response.data.user });
+      const user = response.data.user;
+      set({ authUser: user });
+      localStorage.setItem(LOCAL_AUTH_USER, JSON.stringify(user));
       return response.data.user;
     } catch (error) {
       set({
