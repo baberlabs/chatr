@@ -59,8 +59,8 @@ describe("Chat Routes", () => {
     const resTwo = await request(app).post(regEndpoint).send(users[1]);
     expect(resOne.status).toBe(201);
     expect(resTwo.status).toBe(201);
-    userOneId = resOne.body.data.user._id;
-    userTwoId = resTwo.body.data.user._id;
+    userOneId = resOne.body.user._id;
+    userTwoId = resTwo.body.user._id;
     const resLogin = await request(app)
       .post(loginEndpoint)
       .send({ email: users[0].email, password: users[0].password });
@@ -71,43 +71,38 @@ describe("Chat Routes", () => {
 
   describe("GET /api/v1/chats", () => {
     const endpoint = "/api/v1/chats";
+
     it("should return `401` if user is not authenticated", async () => {
       const res = await request(app).get(endpoint);
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe(ErrorCodes.AUTH_TOKEN_REQUIRED);
     });
+
     it("should return `200` and an empty array if no chats exist", async () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({
-        message: "Chats retrieved",
-        data: {
-          chats: [],
-        },
-      });
+      expect(res.body).toMatchObject({ chats: [] });
     });
+
     it("should return `200` and an array of chats if chats exist", async () => {
       const chatRes = await request(app)
         .post("/api/v1/chats")
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      const chatId = chatRes.body.data.chat._id;
+      const chatId = chatRes.body.chat._id;
       const res = await request(app).get(endpoint).set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "Chats retrieved",
-        data: {
-          chats: expect.arrayContaining([
-            expect.objectContaining({
-              _id: chatId,
-              isGroup: false,
-              participants: expect.arrayContaining([userOneId, userTwoId]),
-              chatName: null,
-              groupAdmin: null,
-            }),
-          ]),
-        },
+        chats: expect.arrayContaining([
+          expect.objectContaining({
+            _id: chatId,
+            isGroup: false,
+            participants: expect.arrayContaining([userOneId, userTwoId]),
+            chatName: null,
+            groupAdmin: null,
+          }),
+        ]),
       });
     });
   });
@@ -158,18 +153,15 @@ describe("Chat Routes", () => {
         .send({ receiverId: userTwoId });
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: "Chat created",
-        data: {
-          chat: {
-            _id: expect.any(String),
-            isGroup: false,
-            participants: expect.arrayContaining([userOneId, userTwoId]),
-            chatName: null,
-            groupAdmin: null,
-            latestMessage: null,
-            createdAt: expect.any(String),
-            updatedAt: expect.any(String),
-          },
+        chat: {
+          _id: expect.any(String),
+          isGroup: false,
+          participants: expect.arrayContaining([userOneId, userTwoId]),
+          chatName: null,
+          groupAdmin: null,
+          latestMessage: null,
+          createdAt: expect.any(String),
+          updatedAt: expect.any(String),
         },
       });
     });
@@ -200,7 +192,7 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies)
         .send({ receiverId: userTwoId });
       expect(chatRes.status).toBe(201);
-      chatId = chatRes.body.data.chat._id;
+      chatId = chatRes.body.chat._id;
     });
 
     it("should return `401` is user is not authenticated", async () => {
@@ -252,15 +244,12 @@ describe("Chat Routes", () => {
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "Chat retrieved",
-        data: {
-          chat: {
-            _id: chatId,
-            isGroup: false,
-            participants: expect.arrayContaining([userOneId, userTwoId]),
-            chatName: null,
-            groupAdmin: null,
-          },
+        chat: {
+          _id: chatId,
+          isGroup: false,
+          participants: expect.arrayContaining([userOneId, userTwoId]),
+          chatName: null,
+          groupAdmin: null,
         },
       });
     });
