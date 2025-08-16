@@ -10,6 +10,7 @@ import { createError, ErrorCodes } from "../../errors.js";
 export class ChatService {
   static async getAllChats(userId) {
     return await Chat.find({ participants: userId })
+      .populate("latestMessage")
       .sort({ updatedAt: -1 })
       .lean();
   }
