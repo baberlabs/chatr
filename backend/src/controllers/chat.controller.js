@@ -8,43 +8,22 @@ import { chatResponse } from "../utils/responses.js";
 
 export const getAllChats = async (req, res) => {
   const userId = req.user._id;
-
   const chats = await ChatService.getAllChats(userId);
-
-  res.status(200).json({
-    message: "Chats retrieved",
-    data: {
-      chats: chats.map(chatResponse),
-    },
-  });
+  res.status(200).json({ chats: chats.map(chatResponse) });
 };
 
 export const createChat = async (req, res) => {
   const senderId = req.user._id;
   const receiverId = req.body.receiverId;
-
   const chat = await ChatService.createDirectChat(senderId, receiverId);
-
-  res.status(201).json({
-    message: "Chat created",
-    data: {
-      chat: chatResponse(chat),
-    },
-  });
+  res.status(201).json({ chat: chatResponse(chat) });
 };
 
 export const getChatById = async (req, res) => {
   const userId = req.user._id;
   const chatId = req.params.chatId;
-
   const chat = await ChatService.getChatById(chatId, userId);
-
-  res.status(200).json({
-    message: "Chat retrieved",
-    data: {
-      chat: chatResponse(chat),
-    },
-  });
+  res.status(200).json({ chat: chatResponse(chat) });
 };
 
 export const deleteChat = () => {};

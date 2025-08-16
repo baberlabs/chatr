@@ -9,32 +9,16 @@ import { generateJWT } from "../utils/generateJWT.js";
 
 export const registerUser = async (req, res) => {
   const { fullName, email, password } = req.body;
-
   const user = await AuthService.registerUser(fullName, email, password);
-
   generateJWT(user._id, res);
-
-  res.status(201).json({
-    message: "User registered",
-    data: {
-      user: userResponse(user),
-    },
-  });
+  res.status(201).json({ user: userResponse(user) });
 };
 
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
-
   const user = await AuthService.loginUser(email, password);
-
   generateJWT(user._id, res);
-
-  res.status(200).json({
-    message: "User logged in",
-    data: {
-      user: userResponse(user),
-    },
-  });
+  res.status(200).json({ user: userResponse(user) });
 };
 
 export const logoutUser = (req, res) => {
@@ -48,10 +32,5 @@ export const logoutUser = (req, res) => {
 };
 
 export const checkAuthStatus = (req, res) => {
-  res.status(200).json({
-    message: "User authenticated",
-    data: {
-      user: userResponse(req.user),
-    },
-  });
+  res.status(200).json({ user: userResponse(req.user) });
 };

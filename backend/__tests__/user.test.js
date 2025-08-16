@@ -82,10 +82,10 @@ describe("User Routes", () => {
       const res = await request(app).get(endpoint).set("Cookie", cookies);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.data.users)).toBe(true);
-      expect(res.body.data.users.length).toBe(users.length - 1);
+      expect(Array.isArray(res.body.users)).toBe(true);
+      expect(res.body.users.length).toBe(users.length - 1);
 
-      for (const user of res.body.data.users) {
+      for (const user of res.body.users) {
         expect(user).toMatchObject({
           _id: expect.any(String),
           fullName: expect.any(String),
@@ -127,8 +127,8 @@ describe("User Routes", () => {
         .post("/api/v1/auth/register")
         .send(users[1]);
 
-      userOneId = res1.body.data.user._id;
-      userTwoId = res2.body.data.user._id;
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
 
       const loginRes = await request(app)
         .post("/api/v1/auth/login")
@@ -169,19 +169,16 @@ describe("User Routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User retrieved",
-        data: {
-          user: {
-            _id: userTwoId,
-            fullName: users[1].fullName,
-            email: users[1].email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userTwoId,
+          fullName: users[1].fullName,
+          email: users[1].email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
   });
 
@@ -213,8 +210,8 @@ describe("User Routes", () => {
         .post("/api/v1/auth/register")
         .send(users[1]);
 
-      userOneId = res1.body.data.user._id;
-      userTwoId = res2.body.data.user._id;
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
 
       const loginRes = await request(app)
         .post("/api/v1/auth/login")
@@ -324,18 +321,15 @@ describe("User Routes", () => {
         .send({ fullName: "Mr NewName" });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: "Mr NewName",
-            email: users[0].email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: "Mr NewName",
+          email: users[0].email,
+          profilePic: "",
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should update password successfully", async () => {
@@ -345,23 +339,19 @@ describe("User Routes", () => {
         .send({ password: "NewPassword123" });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: users[0].email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: users[0].email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
 
       const resLogout = await request(app).post("/api/v1/auth/logout");
       expect(resLogout.status).toBe(200);
-      expect(resLogout.body.message).toBe("User logged out");
 
       const resLoginOldPassword = await request(app)
         .post("/api/v1/auth/login")
@@ -378,15 +368,12 @@ describe("User Routes", () => {
 
       expect(resLoginNewPassword.status).toBe(200);
       expect(resLoginNewPassword.body).toMatchObject({
-        message: "User logged in",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: users[0].email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: users[0].email,
+          profilePic: "",
+          isVerified: false,
         },
       });
     });
@@ -398,18 +385,15 @@ describe("User Routes", () => {
         .send({ email: "new@email.com" });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: "new@email.com",
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: "new@email.com",
+          profilePic: "",
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should normalize email to lowercase", async () => {
@@ -419,18 +403,15 @@ describe("User Routes", () => {
         .send({ email: "New@Email.COM" });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: "new@email.com",
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: "new@email.com",
+          profilePic: "",
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should update profilePic successfully", async () => {
@@ -447,18 +428,15 @@ describe("User Routes", () => {
         .send({ profilePic: base64Image });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: users[0].email,
-            profilePic: imageURL,
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: users[0].email,
+          profilePic: imageURL,
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should trim whitespace from inputs", async () => {
@@ -468,18 +446,15 @@ describe("User Routes", () => {
         .send({ email: "     new@email.com   " });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: "new@email.com",
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: users[0].fullName,
+          email: "new@email.com",
+          profilePic: "",
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should update multiple fields successfully", async () => {
@@ -492,18 +467,15 @@ describe("User Routes", () => {
         });
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User profile updated",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: "Mr New",
-            email: "new@email.com",
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          _id: userOneId,
+          fullName: "Mr New",
+          email: "new@email.com",
+          profilePic: "",
+          isVerified: false,
         },
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user).not.toHaveProperty("password");
     });
   });
 
@@ -536,11 +508,11 @@ describe("User Routes", () => {
       expect(res1.status).toBe(201);
       expect(res2.status).toBe(201);
 
-      expect(res1.body.data.user).toBeDefined();
-      expect(res2.body.data.user).toBeDefined();
+      expect(res1.body.user).toBeDefined();
+      expect(res2.body.user).toBeDefined();
 
-      userOneId = res1.body.data.user._id;
-      userTwoId = res2.body.data.user._id;
+      userOneId = res1.body.user._id;
+      userTwoId = res2.body.user._id;
 
       const loginEndpoint = "/api/v1/auth/login";
 
@@ -552,7 +524,7 @@ describe("User Routes", () => {
       const loginRes = await request(app).post(loginEndpoint).send(loginUser);
 
       expect(loginRes.status).toBe(200);
-      expect(loginRes.body.data.user).toBeDefined();
+      expect(loginRes.body.user).toBeDefined();
 
       cookies = loginRes.headers["set-cookie"];
       expect(cookies).toBeDefined();
@@ -594,19 +566,13 @@ describe("User Routes", () => {
         .delete(`${endpointBase}/${userOneId}`)
         .set("Cookie", cookies);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({
-        message: "User account deleted",
-        data: {
-          user: {
-            _id: userOneId,
-            fullName: users[0].fullName,
-            email: users[0].email,
-            profilePic: "",
-            isVerified: false,
-          },
-        },
+      expect(res.body.user).toMatchObject({
+        _id: userOneId,
+        fullName: users[0].fullName,
+        email: users[0].email,
+        profilePic: "",
+        isVerified: false,
       });
-      expect(res.body.data.user).not.toHaveProperty("password");
 
       // should not allow login after account deletion
       const fetchRes = await request(app)

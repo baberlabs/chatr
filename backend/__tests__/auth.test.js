@@ -102,17 +102,16 @@ describe("Auth Routes", () => {
       const res = await request(app).post(endpoint).send(validPayload);
 
       expect(res.status).toBe(201);
-      expect(res.body.message).toBe("User registered");
-      expect(res.body.data).toMatchObject({
+      expect(res.body).toMatchObject({
         user: {
           fullName: validPayload.fullName,
           email: validPayload.email,
           isVerified: false,
         },
       });
-      expect(res.body.data.user._id).toBeDefined();
-      expect(mongoose.isValidObjectId(res.body.data.user._id)).toBe(true);
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user._id).toBeDefined();
+      expect(mongoose.isValidObjectId(res.body.user._id)).toBe(true);
+      expect(res.body.user).not.toHaveProperty("password");
     });
 
     it("should trim leading/trailing whitespace from input", async () => {
@@ -123,8 +122,8 @@ describe("Auth Routes", () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.user.fullName).toBe("Test User");
-      expect(res.body.data.user.email).toBe("test@example.com");
+      expect(res.body.user.fullName).toBe("Test User");
+      expect(res.body.user.email).toBe("test@example.com");
     });
 
     it("should fail if email already exists", async () => {
@@ -146,14 +145,11 @@ describe("Auth Routes", () => {
       expect(res.status).toBe(201);
 
       expect(res.body).toMatchObject({
-        message: "User registered",
-        data: {
-          user: {
-            fullName: validPayload.fullName,
-            email: validPayload.email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          fullName: validPayload.fullName,
+          email: validPayload.email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
@@ -195,10 +191,8 @@ describe("Auth Routes", () => {
       expect(cookies).toBeDefined();
 
       const res = await request(app).get(endpoint).set("Cookie", cookies);
-
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("User authenticated");
-      expect(res.body.data.user).toMatchObject({
+      expect(res.body.user).toMatchObject({
         _id: expect.any(String),
         fullName: "Status Test User",
         email: "status@test.com",
@@ -272,19 +266,16 @@ describe("Auth Routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        message: "User logged in",
-        data: {
-          user: {
-            fullName: validUser.fullName,
-            email: validUser.email,
-            profilePic: "",
-            isVerified: false,
-          },
+        user: {
+          fullName: validUser.fullName,
+          email: validUser.email,
+          profilePic: "",
+          isVerified: false,
         },
       });
 
-      expect(res.body.data.user._id).toBeDefined();
-      expect(res.body.data.user).not.toHaveProperty("password");
+      expect(res.body.user._id).toBeDefined();
+      expect(res.body.user).not.toHaveProperty("password");
 
       const cookies = res.headers["set-cookie"];
       expect(cookies).toBeDefined();
