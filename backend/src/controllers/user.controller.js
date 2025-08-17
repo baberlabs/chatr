@@ -9,7 +9,6 @@ import { userResponse } from "../utils/responses.js";
 export const getAllUsers = async (req, res) => {
   const userId = req.user._id;
   const users = await UserService.getAllUsersExcept(userId);
-  console.log(users);
   res.status(200).json({ users: users.map(userResponse) });
 };
 
