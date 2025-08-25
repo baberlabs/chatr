@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { createServer } from "http";
+import { UserSocketMap } from "./userSocketMap.js";
 
 let io;
 
@@ -11,26 +12,17 @@ const setupSocket = (app) => {
     },
   });
 
-  const userSocketMap = new Map();
+  const users = new UserSocketMap();
 
-  const addUserToSocketMap = (userId, socketId) => {
-    if (userId && socketId) userSocketMap.set(userId, socketId);
+  const showOnlineUsers = () => {
+    io.emit("getOnlineUsers", users.getOnlineUsers());
   };
 
-  const removeUserFromSocketMap = (userId) => {
-    if (userId && userSocketMap.has(userId)) userSocketMap.delete(userId);
-  };
-
-  const showOnlineUsers = (userSocketMap) => {
-    const onlineUserIds = Array.from(userSocketMap.keys());
-    io.emit("getOnlineUsers", onlineUserIds);
-  };
-
-  const sendMessage = (data, userSocketMap) => {
+  const sendMessage = (data) => {
     const { roomId, message, receiverId } = data;
 
-    if (receiverId && userSocketMap.has(receiverId)) {
-      const receiverSocketId = userSocketMap.get(receiverId);
+    if (receiverId && users.has(receiverId)) {
+      const receiverSocketId = users.getOne(receiverId);
       io.to(receiverSocketId).emit("receiveMessageNotification", {
         message,
       });
@@ -44,15 +36,15 @@ const setupSocket = (app) => {
 
     console.log(`User ${socket.id} has connected`);
 
-    addUserToSocketMap(userId, socket.id);
+    users.add(userId, socket.id);
 
-    showOnlineUsers(userSocketMap);
+    showOnlineUsers();
 
     socket.on("joinRoom", ({ roomId }) => socket.join(roomId));
 
     socket.on("leaveRoom", (roomId) => socket.leave(roomId));
 
-    socket.on("sendMessage", (data) => sendMessage(data, userSocketMap));
+    socket.on("sendMessage", (data) => sendMessage(data));
 
     socket.on("startTypingIndicator", ({ roomId, length }) => {
       socket.to(roomId).emit("startTypingIndicator", { length });
@@ -68,8 +60,8 @@ const setupSocket = (app) => {
 
     socket.on("disconnect", () => {
       console.log(`User ${socket.id} has disconnected`);
-      removeUserFromSocketMap(userId);
-      showOnlineUsers(userSocketMap);
+      users.remove(userId);
+      showOnlineUsers();
     });
   });
 
