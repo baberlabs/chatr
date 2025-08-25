@@ -114,10 +114,10 @@ export const useAuthStore = create((set, get) => ({
       const { socket } = get();
       const selectedChatId = useChatStore.getState().selectedChatId;
       if (socket) {
-        socket.off("getOnlineUsers");
-        socket.off("receiveMessage");
+        socket.off("users:online");
+        socket.off("message:received");
         if (selectedChatId) {
-          socket.emit("leaveRoom", `chat-${selectedChatId}`);
+          socket.emit("chat:leave", `chat-${selectedChatId}`);
         }
       }
       get().disconnectSocket();
@@ -170,7 +170,7 @@ export const useAuthStore = create((set, get) => ({
     socket.connect();
     set({ socket });
 
-    socket.on("getOnlineUsers", (userIds) => {
+    socket.on("users:online", (userIds) => {
       const { selectedUser, setGhostTypingIndicatorLength } =
         useChatStore.getState();
       const prevOnlineUsers = get().onlineUsers;
@@ -184,7 +184,7 @@ export const useAuthStore = create((set, get) => ({
       }
     });
 
-    socket.on("receiveMessageNotification", ({ message }) => {
+    socket.on("message:notification", ({ message }) => {
       const { chats } = useChatStore.getState();
 
       const updatedChats = chats
@@ -201,7 +201,7 @@ export const useAuthStore = create((set, get) => ({
       useChatStore.setState({ chats: updatedChats });
     });
 
-    socket.on("receiveMessage", ({ message }) => {
+    socket.on("message:received", ({ message }) => {
       const chatId = message.chatId;
       const { selectedChatId, chats } = useChatStore.getState();
 
@@ -227,17 +227,17 @@ export const useAuthStore = create((set, get) => ({
       useChatStore.setState({ chats: updatedChats });
     });
 
-    socket.on("startTypingIndicator", ({ length }) => {
+    socket.on("typing:started", ({ length }) => {
       const { setGhostTypingIndicatorLength } = useChatStore.getState();
       setGhostTypingIndicatorLength(length);
     });
 
-    socket.on("stopTypingIndicator", () => {
+    socket.on("typing:stopped", () => {
       const { setGhostTypingIndicatorLength } = useChatStore.getState();
       setGhostTypingIndicatorLength(0);
     });
 
-    socket.on("deleteMessage", ({ messageId }) => {
+    socket.on("message:deleted", ({ messageId }) => {
       if (!messageId) return;
 
       useChatStore.setState((state) => ({

@@ -14,54 +14,48 @@ const setupSocket = (app) => {
 
   const users = new UserSocketMap();
 
-  const showOnlineUsers = () => {
-    io.emit("getOnlineUsers", users.getOnlineUsers());
-  };
-
   const sendMessage = (data) => {
     const { roomId, message, receiverId } = data;
 
     if (receiverId && users.has(receiverId)) {
       const receiverSocketId = users.getOne(receiverId);
-      io.to(receiverSocketId).emit("receiveMessageNotification", {
-        message,
-      });
+      io.to(receiverSocketId).emit("message:notification", { message });
     }
 
-    io.to(roomId).emit("receiveMessage", { message });
+    io.to(roomId).emit("message:received", { message });
+  };
+
+  const emitOnlineUsers = () => {
+    io.emit("users:online", users.getOnlineUsers());
   };
 
   io.on("connection", (socket) => {
     const { userId } = socket.handshake.query;
 
-    console.log(`User ${socket.id} has connected`);
-
     users.add(userId, socket.id);
+    emitOnlineUsers();
 
-    showOnlineUsers();
+    socket.on("chat:join", ({ roomId }) => socket.join(roomId));
 
-    socket.on("joinRoom", ({ roomId }) => socket.join(roomId));
+    socket.on("chat:leave", (roomId) => socket.leave(roomId));
 
-    socket.on("leaveRoom", (roomId) => socket.leave(roomId));
+    socket.on("message:send", (data) => sendMessage(data));
 
-    socket.on("sendMessage", (data) => sendMessage(data));
-
-    socket.on("startTypingIndicator", ({ roomId, length }) => {
-      socket.to(roomId).emit("startTypingIndicator", { length });
+    socket.on("typing:start", ({ roomId, length }) => {
+      socket.to(roomId).emit("typing:started", { length });
     });
 
-    socket.on("stopTypingIndicator", ({ roomId }) => {
-      socket.to(roomId).emit("stopTypingIndicator");
+    socket.on("typing:stop", ({ roomId }) => {
+      socket.to(roomId).emit("typing:stopped");
     });
 
-    socket.on("deleteMessage", ({ roomId, messageId }) => {
-      socket.to(roomId).emit("deleteMessage", { messageId });
+    socket.on("message:delete", ({ roomId, messageId }) => {
+      socket.to(roomId).emit("message:deleted", { messageId });
     });
 
     socket.on("disconnect", () => {
-      console.log(`User ${socket.id} has disconnected`);
       users.remove(userId);
-      showOnlineUsers();
+      emitOnlineUsers();
     });
   });
 
