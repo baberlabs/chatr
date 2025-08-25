@@ -11,34 +11,26 @@ const setupSocket = (app) => {
     },
   });
 
-  const userSocketMap = {};
+  const userSocketMap = new Map();
 
   const addUserToSocketMap = (userId, socketId) => {
-    if (userId) {
-      if (!userSocketMap[userId]) {
-        userSocketMap[userId] = socketId;
-      } else {
-        delete userSocketMap[userId];
-        userSocketMap[userId] = socketId;
-      }
-    }
+    if (userId && socketId) userSocketMap.set(userId, socketId);
   };
 
   const removeUserFromSocketMap = (userId) => {
-    if (userId && userSocketMap[userId]) {
-      delete userSocketMap[userId];
-    }
+    if (userId && userSocketMap.has(userId)) userSocketMap.delete(userId);
   };
 
   const showOnlineUsers = (userSocketMap) => {
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    const onlineUserIds = Array.from(userSocketMap.keys());
+    io.emit("getOnlineUsers", onlineUserIds);
   };
 
   const sendMessage = (data, userSocketMap) => {
     const { roomId, message, receiverId } = data;
 
-    if (receiverId && userSocketMap[receiverId]) {
-      const receiverSocketId = userSocketMap[receiverId];
+    if (receiverId && userSocketMap.has(receiverId)) {
+      const receiverSocketId = userSocketMap.get(receiverId);
       io.to(receiverSocketId).emit("receiveMessageNotification", {
         message,
       });
