@@ -16,7 +16,7 @@ A full-stack messaging application featuring real-time communication, user authe
 **Frontend**: React 19, Tailwind CSS, React Router, Zustand, Socket.IO client  
 **Backend**: Express, MongoDB with Mongoose, Socket.IO, JWT authentication  
 **Testing**: Jest and SuperTest with in-memory MongoDB  
-**Deployment**: Deployed to Render with frontend served statically from Express
+**Deployment**: Deployed to Hetzner VPS with frontend served statically from Express (with Nginx)
 
 ## Features
 
