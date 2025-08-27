@@ -58,7 +58,7 @@ const setupSocket = (app) => {
     });
 
     socket.on("disconnect", () => {
-      users.remove(userId);
+      users.remove(userId, socket.id);
       emitOnlineUsers();
     });
   });

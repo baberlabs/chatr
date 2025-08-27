@@ -8,22 +8,39 @@ export class UserSocketMap {
   }
 
   getOne(userId) {
-    return this._users.get(userId);
+    const userIdStr = userId.toString();
+    const sockets = this._users.get(userIdStr);
+    return sockets ? Array.from(sockets)[0] : undefined;
   }
 
   has(userId) {
-    return this._users.has(userId);
+    const userIdStr = userId.toString();
+    const sockets = this._users.get(userIdStr);
+    return sockets && sockets.size > 0;
   }
 
   add(userId, socketId) {
     if (userId && socketId) {
-      this._users.set(userId, socketId);
+      const userIdStr = userId.toString();
+
+      if (!this._users.has(userIdStr)) {
+        this._users.set(userIdStr, new Set());
+      }
+
+      this._users.get(userIdStr).add(socketId);
     }
   }
 
-  remove(userId) {
-    if (userId && this._users.has(userId)) {
-      this._users.delete(userId);
+  remove(userId, socketId) {
+    const userIdStr = userId.toString();
+
+    if (this._users.has(userIdStr)) {
+      const userSockets = this._users.get(userIdStr);
+      userSockets.delete(socketId);
+
+      if (userSockets.size === 0) {
+        this._users.delete(userIdStr);
+      }
     }
   }
 }
