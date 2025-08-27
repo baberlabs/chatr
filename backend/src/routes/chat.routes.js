@@ -9,7 +9,7 @@ import {
   updateGroupChat,
   leaveGroupChat,
 } from "../controllers/chat.controller.js";
-import { authenticateUser } from "../middleware/auth.middleware.js";
+import { authenticateUser } from "../middleware/auth.http.middleware.js";
 import { catchAsync } from "../utils/catchAsync.js";
 
 const router = Router();

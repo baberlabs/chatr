@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { UserSocketMap } from "./userSocketMap.js";
+import { authenticateUser } from "../middleware/auth.socket.middleware.js";
 
 let io;
 
@@ -9,8 +10,11 @@ const setupSocket = (app) => {
   io = new Server(httpServer, {
     cors: {
       origin: "http://localhost:5173",
+      credentials: true,
     },
   });
+
+  io.use(authenticateUser);
 
   const users = new UserSocketMap();
 
@@ -30,7 +34,7 @@ const setupSocket = (app) => {
   };
 
   io.on("connection", (socket) => {
-    const { userId } = socket.handshake.query;
+    const userId = socket.user._id;
 
     users.add(userId, socket.id);
     emitOnlineUsers();
