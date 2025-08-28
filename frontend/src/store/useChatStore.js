@@ -28,9 +28,9 @@ export const useChatStore = create((set, get) => ({
     if (!selectedChatId || !socket) return;
 
     if (length > 0) {
-      socket.emit("startTypingIndicator", { roomId, length });
+      socket.emit("typing:start", { roomId, length });
     } else {
-      socket.emit("stopTypingIndicator", { roomId });
+      socket.emit("typing:stop", { roomId });
     }
   },
 
@@ -42,7 +42,7 @@ export const useChatStore = create((set, get) => ({
 
     if (socket && prevChatId) {
       const prevRoom = `chat-${prevChatId}`;
-      socket.emit("leaveRoom", prevRoom);
+      socket.emit("chat:leave", prevRoom);
     }
 
     if (!user) {
@@ -94,7 +94,7 @@ export const useChatStore = create((set, get) => ({
       const roomId = `chat-${chatId}`;
       const { socket } = useAuthStore.getState();
       if (socket) {
-        socket.emit("joinRoom", {
+        socket.emit("chat:join", {
           roomId,
           receiverId,
         });
@@ -113,7 +113,7 @@ export const useChatStore = create((set, get) => ({
       const roomId = `chat-${chatId}`;
       const { socket } = useAuthStore.getState();
       if (socket) {
-        socket.emit("joinRoom", {
+        socket.emit("chat:join", {
           roomId,
           receiverId,
         });
@@ -144,7 +144,7 @@ export const useChatStore = create((set, get) => ({
       const selectedUser = get().selectedUser;
       if (socket) {
         const roomId = `chat-${get().selectedChatId}`;
-        socket.emit("sendMessage", {
+        socket.emit("message:send", {
           roomId,
           message: newMessage,
           receiverId: selectedUser._id,
@@ -170,7 +170,7 @@ export const useChatStore = create((set, get) => ({
       const { socket } = useAuthStore.getState();
       const roomId = `chat-${get().selectedChatId}`;
       if (socket) {
-        socket.emit("deleteMessage", { roomId, messageId });
+        socket.emit("message:delete", { roomId, messageId });
       }
     } catch (error) {
       console.error("Error deleting message:", error);
