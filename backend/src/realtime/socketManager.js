@@ -43,21 +43,40 @@ export class SocketManager {
   }
 
   handleConnection(socket) {
-    const userId = socket.user._id;
+    try {
+      const userId = socket.user?._id;
 
-    this.userSocketMap.add(userId, socket.id);
-    this.emitOnlineUsers();
+      if (!userId) {
+        console.error("No userId found on socket");
+        socket.disconnect();
+        return;
+      }
 
-    this.eventRegistry.registerEvents(socket);
+      this.userSocketMap.add(userId, socket.id);
+      this.emitOnlineUsers();
 
-    socket.on("disconnect", () => {
-      this.handleDisconnection(userId, socket);
-    });
+      this.eventRegistry.registerEvents(socket);
+
+      socket.on("disconnect", () => {
+        this.handleDisconnection(userId, socket);
+      });
+
+      socket.on("error", (error) => {
+        console.error(`Socket error for user ${userId}:`, error);
+      });
+    } catch (error) {
+      console.error("Error handling socket connection", error);
+      socket.disconnect();
+    }
   }
 
   handleDisconnection(userId, socket) {
-    this.userSocketMap.remove(userId, socket.id);
-    this.emitOnlineUsers();
+    try {
+      this.userSocketMap.remove(userId, socket.id);
+      this.emitOnlineUsers();
+    } catch (error) {
+      console.error("Error handling disconnection", error);
+    }
   }
 
   emitOnlineUsers() {
